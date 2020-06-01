@@ -44,7 +44,7 @@ public class Top {
         cdTimer.AddCD("today", 300L);
         cdTimer.AddCD("check", 300L);
         cdTimer.AddCD("checktoday", 300L);
-        cdTimer.AddCD("report", 120L);
+        cdTimer.AddCD("report", 60L);
         cdTimer.AddCD("report#", 10L);
         cdTimer.AddCD("help", 300L);
     }
@@ -179,7 +179,7 @@ public class Top {
                             "checktoday:查询某人的今日排行,不加第四个值为查询自己\n" +
                             "report:投诉某人,累计数量到达一定程度的时候给予处分\n" +
                             "help:显示此帮助\n" +
-                            "非管理员report的CD为2分钟,其他为5分钟");
+                            "非管理员report的CD为1分钟,其他为5分钟");
                 break;
             default:
                 event.respond("命令错误\n输入'bot top help'查询帮助");

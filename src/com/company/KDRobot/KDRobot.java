@@ -121,7 +121,7 @@ public class KDRobot extends IcqListener {
                 antiRefresh.process(event);
                 for (String img : Get.CQCode(msg, "image")) {
                     if (!adblock.check(img)) {
-                        String m = "发现二维码，设置1小时buff加成，并后台记录，审核为广告会被bl。";
+                        String m = "发现二维码，送buff加成，并后台记录，审核为广告会被bl。";
                         if (Admin != null) {
                             api.sendPrivateMsg(Admin, event.getGroupId().toString() + '\n'
                                     + event.getSenderId().toString() + '\n' + img.substring(1));
@@ -129,7 +129,8 @@ public class KDRobot extends IcqListener {
                         }
                         event.respond(m);
                         api.deleteMsg(event.getMessageId());
-                        api.setGroupBan(event.getGroupId(), event.getSenderId(), 3600);
+                        api.setGroupBan(event.getGroupId(), event.getSenderId(), 3600 * 12);
+                        logger.log("群:'" + event.getGroupId() + "' '" + event.getSenderId() + "'发现二维码");
                         return;
                     }
                 }

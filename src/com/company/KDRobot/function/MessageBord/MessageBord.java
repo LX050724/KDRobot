@@ -79,10 +79,12 @@ public class MessageBord {
                     process_ls(event, cmd);
                 break;
             case "look":
+                if (cmd.length < 4) break;
                 if (timer.CD(cmd[2]))
                     process_look(event, cmd);
                 break;
             case "del":
+                if (cmd.length < 4) break;
                 if (timer.CD(cmd[2]))
                     process_del(event, cmd);
                 break;
@@ -179,7 +181,7 @@ public class MessageBord {
 
     private void process_push(EventGroupMessage event, String[] cmd) {
         if (cmd.length == 3) {
-            event.respond("请输入标题");
+            event.respond("输入错误，请输入标题重试");
             return;
         }
         if (tmpmsg == null) {

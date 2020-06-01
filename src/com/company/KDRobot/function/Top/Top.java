@@ -109,10 +109,22 @@ public class Top {
     }
 
     private void process_report(EventGroupMessage event, String[] cmd) {
+        if (cmd.length < 4) return;
         Long ID = Get.At2Long(cmd[3]);
 
         IcqHttpApi api = event.getHttpApi();
+        if (ID == null) {
+            event.respond("输入有误");
+            return;
+        }
+
         ReturnData<RGroupMemberInfo> info = api.getGroupMemberInfo(event.getGroupId(), ID);
+
+        if (info.getData() == null) {
+            event.respond("成员" + ID + "不存在");
+            return;
+        }
+
         boolean permissions = info.getData().getRole().equals("owner") || info.getData().getRole().equals("admin");
 
         if (permissions) {
@@ -120,10 +132,6 @@ public class Top {
             return;
         }
 
-        if (ID == null) {
-            event.respond("输入有误");
-            return;
-        }
         TopDataBase.Member m = db.vote(event.getSenderId(), ID);
         if (m == null) {
             event.respond("输入有误或投票当天机会用尽,每人每天一次投票机会,不累计");

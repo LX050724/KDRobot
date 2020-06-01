@@ -13,6 +13,7 @@ public class SuperCommand {
     }
 
     public void peocess_bl(EventGroupMessage event, String[] cmd) {
+        if (cmd.length < 3) return;
         switch (cmd[2]) {
             case "ls": {
                 event.respond(db.ListBlackList());
@@ -37,6 +38,7 @@ public class SuperCommand {
     }
 
     private void process_shutup(EventGroupMessage event, String[] cmd) {
+        if (cmd.length < 4) return;
         Long Id = Get.At2Long(cmd[2]);
         Long time = Get.Str2Time(cmd[3]);
 
@@ -51,6 +53,7 @@ public class SuperCommand {
     }
 
     public void process(EventGroupMessage event, String[] cmd) {
+        if (cmd.length < 2) return;
         switch (cmd[1]) {
             case "bl":
                 peocess_bl(event, cmd);

@@ -13,14 +13,11 @@ import cc.moecraft.icq.sender.message.components.ComponentAt;
 import cc.moecraft.icq.sender.returndata.ReturnData;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.logger.HyLogger;
+import com.company.KDRobot.function.*;
 import com.company.KDRobot.function.Adblock.Adblock;
-import com.company.KDRobot.function.AntiRefresh;
-import com.company.KDRobot.function.CDTimer;
-import com.company.KDRobot.function.Get;
 import com.company.KDRobot.function.MessageBord.MessageBord;
 import com.company.KDRobot.function.Top.Top;
 import com.company.KDRobot.function.sc.SuperCommand;
-import com.company.KDRobot.function.TuringAPI;
 
 import java.io.File;
 import java.util.regex.Pattern;
@@ -54,7 +51,7 @@ public class KDRobot extends IcqListener {
         Msg = new MessageBord(logger, PATH);
         turingAPI = new TuringAPI("f4f88216f44c4fbc84f3ae03cc355300");
         sc = new SuperCommand(PATH);
-        top = new Top(PATH, logger, Admin);
+        top = new Top(PATH, logger, this.Admin);
         cdTimer = new CDTimer(logger);
         adblock = new Adblock(PATH, logger);
         antiRefresh = new AntiRefresh();
@@ -65,6 +62,7 @@ public class KDRobot extends IcqListener {
         cdTimer.AddCD("STFW", 45L);
         cdTimer.AddCD("还有什么补充", 45L);
         cdTimer.AddCD("quiet", 600L);
+        cdTimer.AddCD("baike", 600L);
     }
 
     @EventHandler
@@ -173,6 +171,16 @@ public class KDRobot extends IcqListener {
                             event.respond("此机器人是基于酷Q CQHTTP插件，使用https://github.com/HyDevelop/PicqBotX框架开发的群管理类机器人\n" +
                                     "机器人代码Github地址https://github.com/LX050724/KDRobot");
                         break;
+                    case "baike":
+                        if (cmd.length < 3) {
+                            event.respond("请输入要查询的关键字");
+                            break;
+                        }
+                        if (permissions || cdTimer.CD("baike")) {
+                            String keyword = msg.substring(10);
+                            event.respond(keyword + "百度百科：\n" + BaiKe.GetBaiKe(keyword));
+                        }
+                        break;
                     case "help":
                         event.respond("bot 帮助:\n" +
                                 "top:水群排行\n" +
@@ -180,6 +188,7 @@ public class KDRobot extends IcqListener {
                                 "msg:留言板\n" +
                                 "t:和图灵机器人聊天(所有人10秒CD)\n" +
                                 "about:相关信息\n" +
+                                "baike:查询百度百科(CD10分钟)\n" +
                                 "help:显示此帮助");
                         break;
                     default:
@@ -200,7 +209,7 @@ public class KDRobot extends IcqListener {
             if (sc.chick(event, UserID) && cdTimer.CD("New"))
                 event.getHttpApi().sendGroupMsg(event.getGroupId(), new MessageBuilder()
                         .add(new ComponentAt(UserID))
-                        .add("新人改名看公告\n查看机器人帮助发送\n'bot help'")
+                        .add("新人看公告\n查看机器人帮助发送\n'bot help'")
                         .toString()
                 );
         }

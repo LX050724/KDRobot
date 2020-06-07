@@ -8,10 +8,21 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.Vector;
 
 public class KDRobotCfg {
+    public static class DataBaseCfg {
+        public String URL;
+        public String NAME;
+        public String PASSWORD;
+        public Long Group;
+    }
+
     public static class Config {
+        public DataBaseCfg dataBaseCfg;
         public Long GroupID;
         public Long AdminID;
         public boolean AdminEnable;
@@ -20,6 +31,7 @@ public class KDRobotCfg {
         public Config() {
             GroupID = AdminID = null;
             AdminEnable = false;
+            dataBaseCfg = new DataBaseCfg();
         }
 
         @Override
@@ -36,7 +48,16 @@ public class KDRobotCfg {
     private Vector<Config> ConfigList;
     private String ErrMsg;
 
+    private Connection conn;
+    private Statement stmt;
+
+    private String URL;
+    private String NAME;
+    private String PASSWORD;
+
+
     public KDRobotCfg(String CfgPATH) {
+
         ConfigList = new Vector<>();
         ErrMsg = null;
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -52,6 +73,19 @@ public class KDRobotCfg {
                 ErrMsg = (CfgPATH + " 可能不是bot配置文件");
                 return;
             }
+
+            NodeList DataBaseList = root.getElementsByTagName("DataBase");
+
+            if (DataBaseList.getLength() != 1) {
+                ErrMsg = "有多个或者没有DataBase";
+                return;
+            }
+
+            Element DataBaseElement = (Element) DataBaseList.item(0);
+
+            URL = DataBaseElement.getAttribute("URL");
+            NAME = DataBaseElement.getAttribute("NAME");
+            PASSWORD = DataBaseElement.getAttribute("PASSWORD");
 
             NodeList GroupList = root.getElementsByTagName("Group");
 
@@ -83,6 +117,10 @@ public class KDRobotCfg {
                     ErrMsg = (cfg.GroupID + "中没有或有多个WorkSpace");
                     return;
                 }
+                cfg.dataBaseCfg.NAME = NAME;
+                cfg.dataBaseCfg.PASSWORD = PASSWORD;
+                cfg.dataBaseCfg.URL = URL;
+                cfg.dataBaseCfg.Group = cfg.GroupID;
                 this.ConfigList.add(cfg);
             }
         } catch (Exception e) {

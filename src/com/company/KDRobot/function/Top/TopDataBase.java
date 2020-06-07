@@ -1,144 +1,104 @@
 package com.company.KDRobot.function.Top;
 
+import com.company.KDRobot.KDRobotCfg;
 import javafx.util.Pair;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.*;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Date;
 
-import static org.w3c.dom.Node.ELEMENT_NODE;
 
 public class TopDataBase {
+    private static class RefreshTimer extends TimerTask {
+        private Timer timer;
+        private Statement stmt;
+        private SimpleDateFormat ft;
 
-    public static class Member {
-        public Long today;
-        public Long all;
-        public int ticket;
-        public int Kill;
-    }
+        public RefreshTimer(Statement s) {
+            stmt = s;
+            ft = new SimpleDateFormat("dd");
+        }
 
-    private final String XmlPath;
-    private HashMap<Long, Member> TopData;
-    boolean flash = false;
+        public void Start() {
+            timer = new Timer();
+            timer.schedule(this, 1000 * 60 * 5, 1000 * 60 * 5);
+        }
 
-    String getSaveTime() throws IOException, SAXException, ParserConfigurationException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document d = builder.parse(XmlPath);
-
-        /* 获取根元素 */
-        Element root = d.getDocumentElement();
-        Element topData = (Element) root.getElementsByTagName("TopData").item(0);
-        return topData.getAttribute("SaveTime");
-    }
-
-    public TopDataBase(String DataBasePath) {
-        XmlPath = DataBasePath + "/Top.xml";
-        TopData = new HashMap<>();
-
-        File f = new File(XmlPath);
-        if (!f.exists()) return;
-
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-
-        try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document d = builder.parse(XmlPath);
-
-            /* 获取根元素 */
-            Element root = d.getDocumentElement();
-
-            if (!root.getTagName().equals("KDRobotDataBase")) {
-                System.err.println(XmlPath + " 可能不是bot数据库");
-                System.exit(0);
+        @Override
+        public void run() {
+            try {
+                ResultSet rs = stmt.executeQuery("SELECT LAST_MSG_TIME FROM TOP WHERE ID=0;");
+                rs.next();
+                String time = ft.format(rs.getTimestamp("LAST_MSG_TIME").getTime());
+                String nowtime = ft.format(new Date());
+                if (!time.equals(nowtime)) {
+                    stmt.execute("UPDATE TOP SET TODAY=0,TICKET=1 WHERE ID!=0;");
+                    stmt.execute("UPDATE TOP SET `KILL`=0 WHERE ID!=0 AND `KILL` < 3;");
+                    stmt.execute("UPDATE TOP SET `KILL`=`KILL` - 3 WHERE ID!=0 AND `KILL` != 0;");
+                }
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
             }
-
-            NodeList topData = root.getElementsByTagName("TopData").item(0).getChildNodes();
-
-            for (int i = 0; i < topData.getLength(); i++) {
-                if (topData.item(i).getNodeType() != ELEMENT_NODE)
-                    continue;
-                Element top = (Element) topData.item(i);
-                Member m = new Member();
-                m.today = Long.parseLong(top.getAttribute("ToDay"));
-                m.all = Long.parseLong(top.getAttribute("All"));
-                m.ticket = Integer.parseInt(top.getAttribute("ticket"));
-                m.Kill = Integer.parseInt(top.getAttribute("Kill"));
-                TopData.put(Long.parseLong(top.getAttribute("ID")), m);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
-    public void Save() {
-        flash = false;
-        SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String SaveTime;
-        String NowTime = ft.format(new Date());
+    private RefreshTimer refreshTimer;
+    private Statement stmt;
+    private Connection conn;
+
+    public TopDataBase(KDRobotCfg.DataBaseCfg dataBaseCfg) {
         try {
-            SaveTime = getSaveTime();
-        } catch (Exception e) {
-            e.printStackTrace();
-            SaveTime = NowTime;
-        }
+            conn = DriverManager.getConnection(dataBaseCfg.URL, dataBaseCfg.NAME, dataBaseCfg.PASSWORD);
+            stmt = conn.createStatement();
 
-        if (!SaveTime.substring(8, 10).equals(NowTime.substring(8, 10)))
-            flash = true;
+            /* 前面已经检查过数据库存在了，直接使用 */
+            stmt.execute("USE Group" + dataBaseCfg.Group);
 
-        DocumentBuilder builder = null;
-        try {
-            builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        assert builder != null;
-        Document doc = builder.newDocument();
-        Element root = doc.createElement("KDRobotDataBase");
-        Element TopDataElement = doc.createElement("TopData");
-        doc.appendChild(root);
-        root.appendChild(TopDataElement);
-
-        TopDataElement.setAttribute("SaveTime", NowTime);
-
-        TopData.forEach((a, m) -> {
-            Element top = doc.createElement("top");
-            top.setAttribute("All", m.all.toString());
-            top.setAttribute("ToDay", flash ? "0" : m.today.toString());
-            top.setAttribute("ID", a.toString());
-            top.setAttribute("Kill", Integer.toString(m.Kill));
-            top.setAttribute("ticket", Integer.toString(m.ticket));
-            TopDataElement.appendChild(top);
-            if (flash) {
-                m.today = 0L;
-                m.ticket = 1;
-                m.Kill = m.Kill > 3 ? m.Kill - 3 : 0;
-                TopData.put(a, m);
+            /* 检查TOP表是否存在 */
+            try {
+                stmt.executeQuery("select * from TOP;");
+            } catch (SQLSyntaxErrorException e) {
+                if (e.getErrorCode() == 1146) {
+                    System.out.println("TOP表不存在不存在，创建");
+                    stmt.execute("create table TOP(" +
+                            "ID BIGINT UNSIGNED default 0 not null," +
+                            "TODAY BIGINT UNSIGNED default 0 not null," +
+                            "`ALL` BIGINT UNSIGNED default 0 not null," +
+                            "LAST_MSG VARCHAR(100) null," +
+                            "LAST_MSG_TIME TIMESTAMP null," +
+                            "`KILL` SMALLINT UNSIGNED default 0 not null," +
+                            "TICKET SMALLINT UNSIGNED default 1 not null);");
+                    stmt.execute("create index TOP_ALL_index on TOP (`ALL`);");
+                    stmt.execute("create index TOP_ID_index on TOP (ID);");
+                    stmt.execute("create index TOP_TODAY_index on TOP (TODAY);");
+                    /* 添加用于记录保存时间的0号 */
+                    stmt.execute("INSERT INTO TOP VALUES (0, 0, 0, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
+                } else {
+                    e.printStackTrace();
+                }
             }
-        });
+        } catch (Exception e) {
+            System.err.println(dataBaseCfg.URL + "连接连接失败\n\n");
+            e.printStackTrace();
+            System.exit(-1);
+        }
 
+        refreshTimer = new RefreshTimer(stmt);
+        refreshTimer.Start();
+    }
+
+    public void Add(Long ID) {
         try {
-            FileOutputStream fos = new FileOutputStream(XmlPath);
-            OutputStreamWriter outwriter = new OutputStreamWriter(fos);
-            Source source = new DOMSource(doc);
-            Result result = new StreamResult(outwriter);
-
-            Transformer xformer = TransformerFactory.newInstance().newTransformer();
-            xformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            xformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            xformer.transform(source, result);
-            outwriter.close();
-            fos.close();
+            ResultSet rs = stmt.executeQuery("SELECT TODAY,`ALL` FROM TOP WHERE ID=" + ID + ";");
+            if (rs.next()) {
+                stmt.execute("UPDATE TOP " +
+                        "SET TODAY=TODAY + 1,`ALL`=`ALL` + 1" +
+                        ",LAST_MSG_TIME=CURRENT_TIMESTAMP() " +
+                        "WHERE ID=" + ID + ";");
+            } else {
+                stmt.execute("INSERT INTO TOP VALUES (" + ID + ", 1, 1, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -146,46 +106,53 @@ public class TopDataBase {
 
     public ArrayList<Pair<Long, Long>> getTop() {
         ArrayList<Pair<Long, Long>> list = new ArrayList<>();
-
-        TopData.forEach((ID, m) -> list.add(new Pair<>(ID, m.all)));
-
-        list.sort((o1, o2) -> (int) (o2.getValue() - o1.getValue()));
+        try {
+            ResultSet rs = stmt.executeQuery("SELECT ID,`ALL` FROM TOP WHERE `ALL` > 0 AND ID != 0 ORDER BY `ALL` DESC LIMIT 10;");
+            while (rs.next()) {
+                list.add(new Pair<>(rs.getLong("ID"), rs.getLong("ALL")));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 
     public ArrayList<Pair<Long, Long>> getTopTodat() {
         ArrayList<Pair<Long, Long>> list = new ArrayList<>();
-
-        TopData.forEach((ID, m) -> list.add(new Pair<>(ID, m.today)));
-
-        list.sort((o1, o2) -> (int) (o2.getValue() - o1.getValue()));
+        try {
+            ResultSet rs = stmt.executeQuery("SELECT ID,TODAY FROM TOP WHERE TODAY > 0 AND ID != 0 ORDER BY TODAY DESC LIMIT 10;");
+            while (rs.next()) {
+                list.add(new Pair<>(rs.getLong("ID"), rs.getLong("TODAY")));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 
-    public void Add(Long ID) {
-        Member m;
-        if (TopData.containsKey(ID)) {
-            m = TopData.get(ID);
-            m.all++;
-            m.today++;
-        } else {
-            m = new Member();
-            m.today = 1L;
-            m.all = 1L;
-            m.ticket = 1;
-            m.Kill = 0;
-        }
-        TopData.put(ID, m);
-    }
+    public int vote(Long OperatorID, Long UserID) {
+        try {
+            ResultSet rs = stmt.executeQuery("SELECT TICKET FROM TOP WHERE ID=" + OperatorID + ';');
 
-    public Member vote(Long OperatorID, Long UserID) {
-        Member Operator = TopData.get(OperatorID);
-        Member User = TopData.get(UserID);
-        if (User == null || Operator.ticket < 1) return null;
-        Operator.ticket = 0;
-        User.Kill++;
-        TopData.put(OperatorID, Operator);
-        TopData.put(UserID, User);
-        return User;
+            /* Operator为发送者，肯定存在 */
+            rs.next();
+
+            /* 检查Operator的投票机会 */
+            if (rs.getInt("TICKET") > 0) {
+                /* 获取UserID的KILL */
+                rs = stmt.executeQuery("SELECT `KILL` FROM TOP WHERE ID=" + UserID + ';');
+
+                /* 如果UserID存在，进行投票 */
+                if (rs.next()) {
+                    int kill = rs.getInt("KILL");
+                    stmt.execute("UPDATE TOP SET TICKET=0 WHERE ID=" + OperatorID + ';');
+                    stmt.execute("UPDATE TOP SET `KILL`=`KILL` + 1 WHERE ID=" + UserID + ';');
+                    return kill;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 }

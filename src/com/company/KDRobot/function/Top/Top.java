@@ -5,6 +5,7 @@ import cc.moecraft.icq.sender.IcqHttpApi;
 import cc.moecraft.icq.sender.returndata.ReturnData;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.logger.HyLogger;
+import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.CDTimer;
 import com.company.KDRobot.function.Get;
 import javafx.util.Pair;
@@ -12,33 +13,13 @@ import javafx.util.Pair;
 import java.util.*;
 
 public class Top {
-    private static class AutoSave extends TimerTask {
-        private Timer timer;
-        private HyLogger logger;
-        private TopDataBase p;
-
-        public AutoSave(TopDataBase Parent, HyLogger logger) {
-            p = Parent;
-            this.logger = logger;
-            timer = new Timer();
-            timer.schedule(this, 60000, 60000);
-        }
-
-        @Override
-        public void run() {
-            p.Save();
-        }
-    }
-
     private TopDataBase db;
-    private AutoSave autoSave;
     private CDTimer cdTimer;
     private Long Admin;
 
-    public Top(String DataBasePath, HyLogger logger, Long Admin) {
+    public Top(KDRobotCfg.DataBaseCfg dataBaseCfg, HyLogger logger, Long Admin) {
         this.Admin = Admin;
-        db = new TopDataBase(DataBasePath);
-        autoSave = new AutoSave(db, logger);
+        db = new TopDataBase(dataBaseCfg);
         cdTimer = new CDTimer(logger);
         cdTimer.AddCD("top", 300L);
         cdTimer.AddCD("today", 300L);
@@ -132,12 +113,12 @@ public class Top {
             return;
         }
 
-        TopDataBase.Member m = db.vote(event.getSenderId(), ID);
-        if (m == null) {
+        int kill = db.vote(event.getSenderId(), ID);
+        if (kill == -1) {
             event.respond("输入有误或投票当天机会用尽,每人每天一次投票机会,不累计");
             return;
         }
-        if (m.Kill >= 15) {
+        if (kill >= 15) {
             event.getHttpApi().setGroupBan(event.getGroupId(), ID, 3600);
             event.respond(Get.ID2Name(event.getHttpApi(), event.getGroupId(), ID) + "经多次投诉禁言,大于15票禁言,每天0点自然减三票");
             if (Admin != null)
@@ -148,7 +129,7 @@ public class Top {
                 event.getGroupId(),
                 event.getSenderId(),
                 ID,
-                m.Kill));
+                kill));
     }
 
     public void process(EventGroupMessage event, String[] cmd) {

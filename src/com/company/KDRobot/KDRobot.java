@@ -20,12 +20,13 @@ import com.company.KDRobot.function.Top.Top;
 import com.company.KDRobot.function.sc.SuperCommand;
 
 import java.io.File;
+import java.sql.*;
 import java.util.regex.Pattern;
 
 
 public class KDRobot extends IcqListener {
-    private final Long GroupID;
-    private final Long Admin;
+    private Long GroupID;
+    private Long Admin;
     private CDTimer cdTimer;
     private SuperCommand sc;
     private Top top;
@@ -35,23 +36,44 @@ public class KDRobot extends IcqListener {
     private MessageBord Msg;
     private AntiRefresh antiRefresh;
 
-    public KDRobot(HyLogger bot, KDRobotCfg.Config cfg) {
-        this(bot, cfg.GroupID, cfg.AdminID, cfg.WorkSpace);
-    }
+    public KDRobot(HyLogger logger, KDRobotCfg.Config cfg) {
+        this.logger = logger;
 
-    public KDRobot(HyLogger bot, Long GroupID, Long Admin, String WorkSpace) {
-        String PATH = WorkSpace + '/' + GroupID.toString();
+        /* 检查数据库是否存在 */
+        try {
+            Connection conn = DriverManager.getConnection(cfg.dataBaseCfg.URL, cfg.dataBaseCfg.NAME, cfg.dataBaseCfg.PASSWORD);
+            Statement stmt = conn.createStatement();
+            try {
+                stmt.execute("USE Group" + cfg.dataBaseCfg.Group);
+            } catch (SQLSyntaxErrorException e) {
+                System.out.println(e.getErrorCode());
+                if (e.getErrorCode() == 1049) {
+                    logger.log("数据库'Group" + cfg.dataBaseCfg.Group + "'不存在，创建");
+                    stmt.execute("CREATE DATABASE Group" + cfg.dataBaseCfg.Group + ';');
+                }
+            }
+            stmt.close();
+            conn.close();
+        } catch (Exception e) {
+            System.err.println(cfg.dataBaseCfg.URL + "连接失败\n\n");
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        logger.log("数据库'Group" + cfg.dataBaseCfg.Group + "'连接成功");
+
+        String PATH = cfg.WorkSpace + '/' + cfg.GroupID.toString();
         File d = new File(PATH);
         if (!d.exists()) {
             if (!d.mkdir()) System.err.println(PATH + " mkdir 错误");
         }
-        this.logger = bot;
-        this.Admin = Admin;
-        this.GroupID = GroupID;
+
+        this.Admin = cfg.AdminID;
+        this.GroupID = cfg.GroupID;
         Msg = new MessageBord(logger, PATH);
         turingAPI = new TuringAPI("f4f88216f44c4fbc84f3ae03cc355300");
-        sc = new SuperCommand(PATH);
-        top = new Top(PATH, logger, this.Admin);
+        sc = new SuperCommand(cfg.dataBaseCfg);
+        top = new Top(cfg.dataBaseCfg, logger, this.Admin);
         cdTimer = new CDTimer(logger);
         adblock = new Adblock(PATH, logger);
         antiRefresh = new AntiRefresh();

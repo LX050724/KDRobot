@@ -6,7 +6,9 @@ import cc.moecraft.logger.environments.ColorSupportLevel;
 import com.company.KDRobot.KDRobotCfg;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+
         if (args.length == 0) {
             System.err.println("未指定配置文件路径");
             System.exit(0);
@@ -23,6 +25,7 @@ public class Main {
             System.err.println(botcfg.getErrMsg());
             System.exit(0);
         }
+
         PicqConfig config = new PicqConfig(5702);
         config.setLogPath("");
         if (!color)

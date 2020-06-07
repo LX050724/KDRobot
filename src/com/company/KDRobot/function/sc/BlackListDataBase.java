@@ -1,128 +1,95 @@
 package com.company.KDRobot.function.sc;
 
+import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.Get;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.*;
-import java.util.ArrayList;
+import java.sql.*;
 
-import static org.w3c.dom.Node.ELEMENT_NODE;
 
 public class BlackListDataBase {
-    private final String XmlPath;
-    private ArrayList<Long> BlackList;
+    private Statement stmt;
+    private Connection conn;
 
-    public BlackListDataBase(String DataBasePath) {
-        XmlPath = DataBasePath + "/BlackList.xml";
-        BlackList = new ArrayList<>();
-
-        File f = new File(XmlPath);
-        if (!f.exists()) return;
-
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-
+    public BlackListDataBase(KDRobotCfg.DataBaseCfg dataBaseCfg) {
         try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document d = builder.parse(XmlPath);
+            conn = DriverManager.getConnection(dataBaseCfg.URL, dataBaseCfg.NAME, dataBaseCfg.PASSWORD);
+            stmt = conn.createStatement();
 
-            /* 获取根元素 */
-            Element root = d.getDocumentElement();
+            /* 前面已经检查过数据库存在了，直接使用 */
+            stmt.execute("USE Group" + dataBaseCfg.Group);
 
-            if (!root.getTagName().equals("KDRobotDataBase")) {
-                System.err.println(DataBasePath + " 可能不是bot数据库");
-                System.exit(0);
-            }
-
-            NodeList blackList = root.getElementsByTagName("BlackList").item(0).getChildNodes();
-
-            for (int i = 0; i < blackList.getLength(); i++) {
-                if (blackList.item(i).getNodeType() != ELEMENT_NODE)
-                    continue;
-                Element bl = (Element) blackList.item(i);
-                BlackList.add(Long.parseLong(bl.getAttribute("ID")));
+            /* 检查TOP表是否存在 */
+            try {
+                stmt.executeQuery("select * from BLACKLIST;");
+            } catch (SQLSyntaxErrorException e) {
+                if (e.getErrorCode() == 1146) {
+                    System.out.println("BLACKLIST表不存在不存在，创建");
+                    stmt.execute("create table BLACKLIST(ID BIGINT UNSIGNED default 0 not null);");
+                    stmt.execute("create index BLACKLIST_ID_index on BLACKLIST (ID);");
+                } else {
+                    e.printStackTrace();
+                }
             }
         } catch (Exception e) {
+            System.err.println(dataBaseCfg.URL + "连接连接失败\n\n");
             e.printStackTrace();
-        }
-    }
-
-    private void Save() {
-        DocumentBuilder builder = null;
-        try {
-            builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        assert builder != null;
-        Document doc = builder.newDocument();
-        Element root = doc.createElement("KDRobotDataBase");
-        Element BlackListElement = doc.createElement("BlackList");
-        doc.appendChild(root);
-        root.appendChild(BlackListElement);
-
-        for (Long ID : BlackList) {
-            Element bl = doc.createElement("bl");
-            bl.setAttribute("ID", ID.toString());
-            BlackListElement.appendChild(bl);
-        }
-
-        try {
-            FileOutputStream fos = new FileOutputStream(XmlPath);
-            OutputStreamWriter outwriter = new OutputStreamWriter(fos);
-            Source source = new DOMSource(doc);
-            Result result = new StreamResult(outwriter);
-
-            Transformer xformer = TransformerFactory.newInstance().newTransformer();
-            xformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            xformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            xformer.transform(source, result);
-            outwriter.close();
-            fos.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            System.exit(-1);
         }
     }
 
     public String RemoveBlackList(String ID) {
         Long Id = Get.At2Long(ID);
-
-        if (Id == null || !BlackList.contains(Id))
+        if (Id == null) return null;
+        try {
+            if (stmt.execute("SELECT ID FROM BLACKLIST WHERE ID=" + Id + ';')) {
+                stmt.execute("DELETE FROM BLACKLIST WHERE ID=" + Id + ';');
+                return Id.toString();
+            } else return null;
+        } catch (SQLException e) {
+            e.printStackTrace();
             return null;
-
-        BlackList.remove(Id);
-        Save();
-        return Id.toString();
+        }
     }
 
     public String AddBlackList(String ID) {
         Long Id = Get.At2Long(ID);
-
-        if (Id == null || BlackList.contains(Id))
+        if (Id == null) return null;
+        try {
+            if (!stmt.executeQuery("SELECT ID FROM BLACKLIST WHERE ID=" + Id + ';').next()) {
+                stmt.execute("INSERT INTO BLACKLIST VALUE (" + Id + ");");
+                return Id.toString();
+            } else return null;
+        } catch (SQLException e) {
+            e.printStackTrace();
             return null;
-
-        BlackList.add(Id);
-        Save();
-        return Id.toString();
+        }
     }
 
     public String ListBlackList() {
         StringBuilder str = new StringBuilder();
-        str.append("总计").append(BlackList.size()).append('\n');
-        for (Long ID : BlackList) {
-            str.append(ID).append("\n");
+        int count = 0;
+        try {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM BLACKLIST;");
+            while (rs.next()) {
+                str.append(rs.getLong("ID")).append('\n');
+                ++count;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return "err " + e.getMessage();
         }
+        str.insert(0, "总计" + count + '\n');
         str.deleteCharAt(str.length() - 1);
         return str.toString();
     }
 
     public boolean Check(String ID) {
-        return BlackList.contains(Long.parseLong(ID));
+        try {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM BLACKLIST WHERE ID=" + ID + ';');
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

@@ -3,13 +3,14 @@ package com.company.KDRobot.function.sc;
 import cc.moecraft.icq.event.events.message.EventGroupMessage;
 import cc.moecraft.icq.event.events.notice.groupmember.increase.EventNoticeGroupMemberIncrease;
 import cc.moecraft.icq.sender.IcqHttpApi;
+import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.Get;
 
 public class SuperCommand {
     private BlackListDataBase db;
 
-    public SuperCommand(String DataBasePath) {
-        db = new BlackListDataBase(DataBasePath);
+    public SuperCommand(KDRobotCfg.DataBaseCfg dataBaseCfg) {
+        db = new BlackListDataBase(dataBaseCfg);
     }
 
     public void peocess_bl(EventGroupMessage event, String[] cmd) {

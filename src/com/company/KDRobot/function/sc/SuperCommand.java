@@ -53,6 +53,25 @@ public class SuperCommand {
         else event.respond(String.format("%s禁言%d秒", name, time));
     }
 
+    private void process_sql(EventGroupMessage event, String[] cmd) {
+        if (cmd.length < 4) return;
+        String SQL = event.getMessage().substring(7);
+        if (SQL.length() < 3) return;
+
+        String r;
+        if (cmd[2].equals("w"))
+            r = db.SQL_Eval(SQL.substring(2), true);
+        else if (cmd[2].equals("r"))
+            r = db.SQL_Eval(SQL.substring(2), false);
+        else {
+            event.respond("错误，指定操作方向r、w");
+            return;
+        }
+        event.getBot().getLogger().log("群'" + event.getGroupId() + "'\t管理员'" +
+                event.getSenderId() + "'\n操作:\n" + SQL.substring(2) + "\n返回:\n" + r);
+        event.respond(r);
+    }
+
     public void process(EventGroupMessage event, String[] cmd) {
         if (cmd.length < 2) return;
         switch (cmd[1]) {
@@ -61,6 +80,9 @@ public class SuperCommand {
                 break;
             case "shutup":
                 process_shutup(event, cmd);
+                break;
+            case "sql":
+                process_sql(event, cmd);
                 break;
             default:
                 event.respond("命令错误");

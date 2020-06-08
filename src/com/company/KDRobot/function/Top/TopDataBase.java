@@ -29,13 +29,15 @@ public class TopDataBase {
         public void run() {
             try {
                 ResultSet rs = stmt.executeQuery("SELECT LAST_MSG_TIME FROM TOP WHERE ID=0;");
-                rs.next();
-                String time = ft.format(rs.getTimestamp("LAST_MSG_TIME").getTime());
-                String nowtime = ft.format(new Date());
-                if (!time.equals(nowtime)) {
-                    stmt.execute("UPDATE TOP SET TODAY=0,TICKET=1 WHERE ID!=0;");
-                    stmt.execute("UPDATE TOP SET `KILL`=0 WHERE ID!=0 AND `KILL` < 3;");
-                    stmt.execute("UPDATE TOP SET `KILL`=`KILL` - 3 WHERE ID!=0 AND `KILL` != 0;");
+                if(rs.next()) {
+                    String time = ft.format(rs.getTimestamp("LAST_MSG_TIME").getTime());
+                    String nowtime = ft.format(new Date());
+                    if (!time.equals(nowtime)) {
+                        stmt.execute("UPDATE TOP SET `KILL`=IF(`KILL`<3,0,`KILL`-3),TODAY=0,TICKET=1 WHERE ID!=0;");
+                    }
+                    stmt.execute("UPDATE TOP SET LAST_MSG_TIME=CURRENT_TIMESTAMP() WHERE ID=0;");
+                } else {
+                    stmt.execute("INSERT INTO TOP VALUES (0, 0, 0, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
                 }
             } catch (SQLException throwables) {
                 throwables.printStackTrace();
@@ -69,6 +71,7 @@ public class TopDataBase {
                             "LAST_MSG_TIME TIMESTAMP null," +
                             "`KILL` SMALLINT UNSIGNED default 0 not null," +
                             "TICKET SMALLINT UNSIGNED default 1 not null);");
+                    stmt.execute("alter table TOP add constraint TOP_pk primary key (ID);");
                     stmt.execute("create index TOP_ALL_index on TOP (`ALL`);");
                     stmt.execute("create index TOP_ID_index on TOP (ID);");
                     stmt.execute("create index TOP_TODAY_index on TOP (TODAY);");

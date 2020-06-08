@@ -72,7 +72,7 @@ public class KDRobot extends IcqListener {
         this.GroupID = cfg.GroupID;
         Msg = new MessageBord(logger, PATH);
         turingAPI = new TuringAPI("f4f88216f44c4fbc84f3ae03cc355300");
-        sc = new SuperCommand(cfg.dataBaseCfg);
+        sc = new SuperCommand(cfg.dataBaseCfg, this.Admin);
         top = new Top(cfg.dataBaseCfg, logger, this.Admin);
         cdTimer = new CDTimer(logger);
         adblock = new Adblock(PATH, logger);
@@ -218,8 +218,9 @@ public class KDRobot extends IcqListener {
                 }
             }
 
-            if (cmd[0].equals("sc") && permissions) {
-                sc.process(event, cmd);
+            if (cmd[0].equals("sc")) {
+                if(permissions || (Admin != null && event.getSenderId().equals(Admin)))
+                    sc.process(event, cmd);
             }
         }
     }

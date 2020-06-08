@@ -2,8 +2,10 @@ package com.company.KDRobot.function.sc;
 
 import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.Get;
+import javafx.util.Pair;
 
 import java.sql.*;
+import java.util.Vector;
 
 
 public class BlackListDataBase {
@@ -25,6 +27,7 @@ public class BlackListDataBase {
                 if (e.getErrorCode() == 1146) {
                     System.out.println("BLACKLIST表不存在不存在，创建");
                     stmt.execute("create table BLACKLIST(ID BIGINT UNSIGNED default 0 not null);");
+                    stmt.execute("alter table BLACKLIST add constraint BLACKLIST_pk primary key (ID);");
                     stmt.execute("create index BLACKLIST_ID_index on BLACKLIST (ID);");
                 } else {
                     e.printStackTrace();
@@ -91,5 +94,43 @@ public class BlackListDataBase {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public String SQL_Eval(String sql, Boolean write) {
+        try {
+            if(write) {
+                String s = stmt.execute(sql) ? "execute return true" : "execute return false";
+                return stmt.getUpdateCount() + " rows retrieved " + s;
+            } else {
+                StringBuilder str = new StringBuilder();
+                ResultSet rs = stmt.executeQuery(sql);
+                ResultSetMetaData resultMetaData = rs.getMetaData();
+                Vector<Pair<Integer, String>> Columns = new Vector<>();
+
+                for (int i = 1; i <= resultMetaData.getColumnCount(); ++i) {
+                    Columns.add(new Pair<>(resultMetaData.getColumnType(i), resultMetaData.getColumnLabel(i)));
+                }
+                while (rs.next()) {
+                    try {
+                        for (Pair<Integer, String> Column : Columns) {
+                            Object Obj = rs.getObject(Column.getValue());
+                            String val;
+                            if (Obj == null) val = "<NULL>";
+                            else val = Obj.toString();
+                            str.append(Column.getValue()).append("=").append(val).append(',');
+                        }
+                        str.deleteCharAt(str.length() - 1);
+                        str.append('\n');
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return "";
+                    }
+                }
+                str.deleteCharAt(str.length() - 1);
+                return str.toString();
+            }
+        } catch (SQLException e) {
+            return "Error ID=" + e.getErrorCode() + '\n' + e.getMessage();
+        }
     }
 }

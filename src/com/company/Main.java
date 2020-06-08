@@ -27,7 +27,7 @@ public class Main {
         }
 
         PicqConfig config = new PicqConfig(5702);
-        config.setLogPath("");
+
         if (!color)
             config.setColorSupportLevel(ColorSupportLevel.DISABLED);
         PicqBotX bot = new PicqBotX(config);

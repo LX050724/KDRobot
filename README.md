@@ -61,6 +61,8 @@
 >`sc bl rm <ID>`将ID移除黑名单,ID可以是直接@某人或某人的QQ号
 >
 >`sc shutup <ID> <time>`禁言某人time时间,时间格式同`quiet`格式
+>
+>`sc sql <direction> <cmd>`直接操作数据库，direction操作方向：'w'写数据库，'r'读数据库，cmd：MySQL命令。
 
 >## 其他功能
 >
@@ -88,6 +90,8 @@ post_url=http://127.0.0.1:5702
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <KDRobotConfig>
+    <!--必填选项,MySQL登录信息-->
+    <DataBase URL="jdbc:mysql://xxx.xxx.xxx.xxx:xxx?useSSL=false&amp;serverTimezone=GMT%2B8" NAME="xxx" PASSWORD="xxx"/>
     <Group ID="123456789">
         <!--可选选项,管理QQ号,需要和机器人有好友,会私聊发送一些通知,不填就不会发送-->
         <Admin ID="987654321"/>

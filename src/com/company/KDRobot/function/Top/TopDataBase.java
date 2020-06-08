@@ -29,7 +29,7 @@ public class TopDataBase {
         public void run() {
             try {
                 ResultSet rs = stmt.executeQuery("SELECT LAST_MSG_TIME FROM TOP WHERE ID=0;");
-                if(rs.next()) {
+                if (rs.next()) {
                     String time = ft.format(rs.getTimestamp("LAST_MSG_TIME").getTime());
                     String nowtime = ft.format(new Date());
                     if (!time.equals(nowtime)) {
@@ -106,6 +106,37 @@ public class TopDataBase {
             e.printStackTrace();
         }
     }
+
+    public Pair<Long, Long> getCheckToday(Long ID) {
+        try {
+            ResultSet rs = stmt.executeQuery("select TODAY,TOPNUM " +
+                    "FROM (select *, row_number() over (ORDER BY TODAY DESC) TOPNUM " +
+                    "      FROM (SELECT ID,TODAY FROM TOP WHERE ID != 0) AS IT) as asd " +
+                    "where ID = " + ID + ";");
+            if (rs.next()) {
+                return new Pair<>(rs.getLong("TOPNUM"), rs.getLong("TODAY"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Pair<Long, Long> getCheck(Long ID) {
+        try {
+            ResultSet rs = stmt.executeQuery("select `ALL`,TOPNUM " +
+                    "FROM (select *, row_number() over (ORDER BY `ALL` DESC) TOPNUM " +
+                    "      FROM (SELECT ID,`ALL` FROM TOP WHERE ID != 0) AS IT) as asd " +
+                    "where ID = " + ID + ";");
+            if (rs.next()) {
+                return new Pair<>(rs.getLong("TOPNUM"), rs.getLong("ALL"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
     public ArrayList<Pair<Long, Long>> getTop() {
         ArrayList<Pair<Long, Long>> list = new ArrayList<>();

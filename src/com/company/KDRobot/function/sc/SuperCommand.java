@@ -8,9 +8,10 @@ import com.company.KDRobot.function.Get;
 
 public class SuperCommand {
     private BlackListDataBase db;
-
-    public SuperCommand(KDRobotCfg.DataBaseCfg dataBaseCfg) {
+    private Long Admin;
+    public SuperCommand(KDRobotCfg.DataBaseCfg dataBaseCfg, Long Admin) {
         db = new BlackListDataBase(dataBaseCfg);
+        this.Admin = Admin;
     }
 
     public void peocess_bl(EventGroupMessage event, String[] cmd) {
@@ -82,7 +83,10 @@ public class SuperCommand {
                 process_shutup(event, cmd);
                 break;
             case "sql":
-                process_sql(event, cmd);
+                if(Admin != null && event.getSenderId().equals(Admin))
+                    process_sql(event, cmd);
+                else
+                    event.respond("仅机器人管理员可操作数据库");
                 break;
             default:
                 event.respond("命令错误");

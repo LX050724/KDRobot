@@ -105,25 +105,28 @@ public class BlackListDataBase {
                 StringBuilder str = new StringBuilder();
                 ResultSet rs = stmt.executeQuery(sql);
                 ResultSetMetaData resultMetaData = rs.getMetaData();
-                Vector<Pair<Integer, String>> Columns = new Vector<>();
+                Vector<String> Columns = new Vector<>();
 
                 for (int i = 1; i <= resultMetaData.getColumnCount(); ++i) {
-                    Columns.add(new Pair<>(resultMetaData.getColumnType(i), resultMetaData.getColumnLabel(i)));
+                    Columns.add(resultMetaData.getColumnLabel(i));
+                    str.append(resultMetaData.getColumnLabel(i)).append(',');
                 }
+                str.deleteCharAt(str.length() - 1);
+                str.append(":\n");
                 while (rs.next()) {
                     try {
-                        for (Pair<Integer, String> Column : Columns) {
-                            Object Obj = rs.getObject(Column.getValue());
+                        for (String Column : Columns) {
+                            Object Obj = rs.getObject(Column);
                             String val;
                             if (Obj == null) val = "<NULL>";
                             else val = Obj.toString();
-                            str.append(Column.getValue()).append("=").append(val).append(',');
+                            str.append(val).append(',');
                         }
                         str.deleteCharAt(str.length() - 1);
                         str.append('\n');
                     } catch (Exception e) {
                         e.printStackTrace();
-                        return "";
+                        return e.toString();
                     }
                 }
                 str.deleteCharAt(str.length() - 1);

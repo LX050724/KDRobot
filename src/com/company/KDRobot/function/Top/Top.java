@@ -43,7 +43,6 @@ public class Top {
             String name = Get.ID2Name(api, event.getGroupId(), i.getKey());
             stringBuilder.append(String.format("第%d名 %s---%d条", ++count, name, i.getValue()))
                     .append('\n');
-            if (count == 10) break;
         }
         stringBuilder.deleteCharAt(stringBuilder.length() - 1);
         return stringBuilder.toString();
@@ -63,14 +62,15 @@ public class Top {
             event.respond("输入有误");
             return;
         }
-        int conut = 1;
-        for (Pair<Long, Long> i : db.getTop()) {
-            if (i.getKey().equals(ID)) {
-                String name = Get.ID2Name(event.getHttpApi(), event.getGroupId(), i.getKey());
-                event.respond(String.format("%s 总排行第%d名,共%d条", name, conut, i.getValue()));
-            }
-            ++conut;
+        Pair<Long,Long> top = db.getCheck(ID);
+
+        if(top == null) {
+            event.respond("查无此人或输入有误");
+            return;
         }
+
+        String name = Get.ID2Name(event.getHttpApi(), event.getGroupId(), ID);
+        event.respond(String.format("%s 总排行第%d名,共%d条", name, top.getKey(), top.getValue()));
     }
 
     private void process_chicktoday(EventGroupMessage event, String IDStr) {
@@ -79,14 +79,15 @@ public class Top {
             event.respond("输入有误");
             return;
         }
-        int conut = 1;
-        for (Pair<Long, Long> i : db.getTopTodat()) {
-            if (i.getKey().equals(ID)) {
-                String name = Get.ID2Name(event.getHttpApi(), event.getGroupId(), i.getKey());
-                event.respond(String.format("%s 今日排行第%d名,共%d条", name, conut, i.getValue()));
-            }
-            ++conut;
+        Pair<Long,Long> top = db.getCheckToday(ID);
+
+        if(top == null) {
+            event.respond("查无此人或输入有误");
+            return;
         }
+
+        String name = Get.ID2Name(event.getHttpApi(), event.getGroupId(), ID);
+        event.respond(String.format("%s 今日排行第%d名,共%d条", name, top.getKey(), top.getValue()));
     }
 
     private void process_report(EventGroupMessage event, String[] cmd) {

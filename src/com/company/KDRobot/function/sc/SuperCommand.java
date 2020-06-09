@@ -3,12 +3,18 @@ package com.company.KDRobot.function.sc;
 import cc.moecraft.icq.event.events.message.EventGroupMessage;
 import cc.moecraft.icq.event.events.notice.groupmember.increase.EventNoticeGroupMemberIncrease;
 import cc.moecraft.icq.sender.IcqHttpApi;
+import cc.moecraft.icq.sender.message.MessageBuilder;
+import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.Get;
+
+import java.util.List;
+import java.util.Vector;
 
 public class SuperCommand {
     private BlackListDataBase db;
     private Long Admin;
+
     public SuperCommand(KDRobotCfg.DataBaseCfg dataBaseCfg, Long Admin) {
         db = new BlackListDataBase(dataBaseCfg);
         this.Admin = Admin;
@@ -18,13 +24,31 @@ public class SuperCommand {
         if (cmd.length < 3) return;
         switch (cmd[2]) {
             case "ls": {
-                event.respond(db.ListBlackList());
+                event.respond(db.StringBlackList());
                 break;
             }
             case "rm": {
                 String ID = db.RemoveBlackList(cmd[3]);
                 if (ID != null) event.respond(ID + "成功移除黑名单");
                 else event.respond("移除失败,有可能是没有添加过或拼写错误");
+                break;
+            }
+            case "check": {
+                MessageBuilder msg = new MessageBuilder();
+                Long GroupID = event.getGroupId();
+                IcqHttpApi api = event.getHttpApi();
+                Vector<Long> Blcaklist = db.ListBlackList();
+                List<RGroupMemberInfo> GroupMemberList = api.getGroupMemberList(event.getGroupId()).data;
+                if (GroupMemberList != null && Blcaklist != null) {
+                    for (RGroupMemberInfo Info : GroupMemberList) {
+                        if (Blcaklist.contains(Info.getUserId())) {
+                            api.setGroupKick(GroupID, Info.getUserId());
+                            msg.add(Info.getUserId()).add(",\n");
+                        }
+                    }
+                    msg.add("踢出以上");
+                    event.respond(msg.toString());
+                } else event.respond("错误");
                 break;
             }
             default: {
@@ -83,7 +107,7 @@ public class SuperCommand {
                 process_shutup(event, cmd);
                 break;
             case "sql":
-                if(Admin != null && event.getSenderId().equals(Admin))
+                if (Admin != null && event.getSenderId().equals(Admin))
                     process_sql(event, cmd);
                 else
                     event.respond("仅机器人管理员可操作数据库");
@@ -94,7 +118,7 @@ public class SuperCommand {
     }
 
     public boolean chick(EventNoticeGroupMemberIncrease event, Long ID) {
-        if (db.Check(ID.toString())) {
+        if (db.CheckOne(ID.toString())) {
             IcqHttpApi api = event.getHttpApi();
             api.setGroupKick(event.getGroupId(), ID);
             api.sendGroupMsg(event.getGroupId(), ID.toString() + "是黑名单成员!");

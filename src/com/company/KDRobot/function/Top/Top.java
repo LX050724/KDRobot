@@ -17,7 +17,7 @@ public class Top {
     private CDTimer cdTimer;
     private Long Admin;
 
-    public Top(KDRobotCfg.DataBaseCfg dataBaseCfg, HyLogger logger, Long Admin) {
+    public Top(KDRobotCfg.DataBaseCfg dataBaseCfg, Long Admin, HyLogger logger) {
         this.Admin = Admin;
         db = new TopDataBase(dataBaseCfg);
         cdTimer = new CDTimer(logger);
@@ -30,8 +30,12 @@ public class Top {
         cdTimer.AddCD("help", 300L);
     }
 
-    public void getMsg(Long ID) {
-        db.Add(ID);
+    public void getMsg(EventGroupMessage event, boolean permissions) {
+        if (db.Add(event.getSenderId(), event.getMessage(), permissions)) {
+            event.getHttpApi().setGroupBan(event.getGroupId(), event.getSenderId(), 900);
+            event.getBot().getLogger().log(event.getSenderId() + "刷屏禁言");
+            event.respond(Get.ID2Name(event.getHttpApi(), event.getGroupId(), event.getSenderId()) + "刷屏禁言");
+        }
     }
 
     private String getTopTable(EventGroupMessage event, ArrayList<Pair<Long, Long>> list) {
@@ -62,9 +66,9 @@ public class Top {
             event.respond("输入有误");
             return;
         }
-        Pair<Long,Long> top = db.getCheck(ID);
+        Pair<Long, Long> top = db.getCheck(ID);
 
-        if(top == null) {
+        if (top == null) {
             event.respond("查无此人或输入有误");
             return;
         }
@@ -79,9 +83,9 @@ public class Top {
             event.respond("输入有误");
             return;
         }
-        Pair<Long,Long> top = db.getCheckToday(ID);
+        Pair<Long, Long> top = db.getCheckToday(ID);
 
-        if(top == null) {
+        if (top == null) {
             event.respond("查无此人或输入有误");
             return;
         }

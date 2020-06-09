@@ -1,28 +1,13 @@
 package com.company.KDRobot.function.MessageBord;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import com.company.KDRobot.KDRobotCfg;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Random;
+import java.sql.*;
 import java.util.Vector;
-
-import static org.w3c.dom.Node.TEXT_NODE;
 
 public class MessageBordDataBase {
     public static class Message {
-        public Long msgID;
+        public int msgID;
         public Long userID;
         public Long time;
         public String title;
@@ -40,127 +25,106 @@ public class MessageBordDataBase {
         }
     }
 
-    private String XmlPath;
+    private Statement stmt;
+    private Connection conn;
 
-    private HashMap<Long, Message> Data;
-
-    public MessageBordDataBase(String DataBasePath) {
-        XmlPath = DataBasePath + "/Message.xml";
-        Data = new HashMap<>();
-
-        File f = new File(XmlPath);
-        if (!f.exists()) return;
-
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-
+    public MessageBordDataBase(KDRobotCfg.DataBaseCfg dataBaseCfg) {
         try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document d = builder.parse(XmlPath);
+            conn = DriverManager.getConnection(dataBaseCfg.URL, dataBaseCfg.NAME, dataBaseCfg.PASSWORD);
+            stmt = conn.createStatement();
 
-            /* 获取根元素 */
-            Element root = d.getDocumentElement();
+            /* 前面已经检查过数据库存在了，直接使用 */
+            stmt.execute("USE Group" + dataBaseCfg.Group);
 
-            if (!root.getTagName().equals("KDRobotDataBase")) {
-                System.err.println(DataBasePath + " 可能不是bot数据库");
-                System.exit(0);
-            }
-
-            NodeList MessageList = root.getElementsByTagName("Message");
-
-            for (int i = 0; i < MessageList.getLength(); i++) {
-                Message msg = new Message();
-                Element MessageElement = (Element) MessageList.item(i);
-                msg.msgID = Long.parseLong(MessageElement.getAttribute("ID"));
-                msg.time = Long.parseLong(MessageElement.getAttribute("time"));
-                msg.userID = Long.parseLong(MessageElement.getAttribute("User"));
-                msg.title = MessageElement.getAttribute("title");
-
-                Node bodyNode = MessageElement.getFirstChild();
-                if (bodyNode.getNodeType() == TEXT_NODE) {
-                    msg.body = bodyNode.getNodeValue();
+            /* 检查MSGBORD表是否存在 */
+            try {
+                stmt.execute("select ID from MSGBORD;");
+            } catch (SQLSyntaxErrorException e) {
+                if (e.getErrorCode() == 1146) {
+                    System.out.println("MAGBORD表不存在不存在，创建");
+                    stmt.execute("CREATE TABLE MSGBORD(\n" +
+                            "ID INT NOT NULL AUTO_INCREMENT," +
+                            "USERID INT NOT NULL," +
+                            "TITLE VARCHAR(20) NOT NULL," +
+                            "MSG VARCHAR(100) NOT NULL," +
+                            "TIME TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                            "CONSTRAINT MSGBORD_pk PRIMARY KEY (ID));");
+                    stmt.execute("CREATE INDEX MSGBORD_ID_index ON MSGBORD (ID);");
+                    stmt.execute("CREATE INDEX MSGBORD_USERID_index ON MSGBORD (USERID);");
+                } else {
+                    e.printStackTrace();
                 }
-                Data.put(msg.msgID, msg);
             }
         } catch (Exception e) {
+            System.err.println(dataBaseCfg.URL + "连接连接失败\n\n");
             e.printStackTrace();
-        }
-    }
-
-    public void Save() {
-        DocumentBuilder builder = null;
-        try {
-            builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        assert builder != null;
-        Document doc = builder.newDocument();
-        Element root = doc.createElement("KDRobotDataBase");
-        doc.appendChild(root);
-
-        Data.forEach((ID, msg) -> {
-            Element MessageElement = doc.createElement("Message");
-            MessageElement.setAttribute("ID", msg.msgID.toString());
-            MessageElement.setAttribute("time", msg.time.toString());
-            MessageElement.setAttribute("User", msg.userID.toString());
-            MessageElement.setAttribute("title", msg.title);
-            MessageElement.appendChild(doc.createTextNode(msg.body));
-            root.appendChild(MessageElement);
-        });
-
-        try {
-            FileOutputStream fos = new FileOutputStream(XmlPath);
-            OutputStreamWriter outwriter = new OutputStreamWriter(fos);
-            Source source = new DOMSource(doc);
-            Result result = new StreamResult(outwriter);
-
-            Transformer xformer = TransformerFactory.newInstance().newTransformer();
-            xformer.setOutputProperty(OutputKeys.ENCODING, "GBK");
-            xformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            xformer.transform(source, result);
-            outwriter.close();
-            fos.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            System.exit(-1);
         }
     }
 
     public Vector<Message> ListMsg() {
         Vector<Message> vector = new Vector<>();
-        Vector<Long> delete = new Vector<>();
 
-        Long nowTime = new Date().getTime();
-        Data.forEach((ID, msg) -> {
-            if (nowTime - msg.time > 3600000 * 24 * 3) {
-                delete.add(ID);
-            } else {
+        try {
+            stmt.execute("DELETE FROM MSGBORD WHERE CURRENT_TIMESTAMP() - TIME > 3600000 * 24 * 3;");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM MSGBORD;");
+            while (rs.next()) {
+                Message msg = new Message();
+                msg.body = rs.getString("MSG");
+                msg.title = rs.getString("TITLE");
+                msg.time = rs.getTimestamp("TIME").getTime();
+                msg.msgID = rs.getInt("ID");
+                msg.userID = rs.getLong("USERID");
                 vector.add(msg);
             }
-        });
-        delete.forEach((ID) -> {
-            Data.remove(ID);
-        });
-        Save();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return vector;
     }
 
     public Long pushMsg(Message msg) {
-        Random r = new Random();
-        msg.time = new Date().getTime();
-        do {
-            msg.msgID = (long) r.nextInt(10000);
-        } while (find(msg.msgID) != null);
-        Data.put(msg.msgID, msg);
-        Save();
-        return msg.msgID;
+        try {
+            stmt.execute(String.format(
+                    "INSERT INTO MSGBORD (USERID, TITLE, MSG, TIME) VALUES (%d, '%s', '%s', DEFAULT);",
+                    msg.userID, msg.title, msg.body));
+            ResultSet rs = stmt.executeQuery(String.format(
+                    "SELECT ID FROM MSGBORD WHERE USERID='%d' AND TITLE='%S' AND MSG='%S';",
+                    msg.userID, msg.title, msg.body));
+            if (rs.next()) {
+                return rs.getLong(1);
+            } else return null;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            return null;
+        }
     }
 
-    public void deleteMsg(Long MsgID) {
-        Data.remove(MsgID);
-        Save();
+    public boolean deleteMsg(Long MsgID) {
+        try {
+            stmt.execute("DELETE FROM MSGBORD WHERE ID=" + MsgID + ';');
+            return stmt.getUpdateCount() == 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public Message find(Long MsgID) {
-        return Data.get(MsgID);
+        try {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM MSGBORD WHERE ID=" + MsgID + ';');
+            if (rs.next()) {
+                Message msg = new Message();
+                msg.body = rs.getString("MSG");
+                msg.title = rs.getString("TITLE");
+                msg.time = rs.getTimestamp("TIME").getTime();
+                msg.msgID = rs.getInt("ID");
+                msg.userID = rs.getLong("USERID");
+                return msg;
+            } else return null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

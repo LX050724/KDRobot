@@ -2,7 +2,6 @@ package com.company.KDRobot.function.sc;
 
 import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.Get;
-import javafx.util.Pair;
 
 import java.sql.*;
 import java.util.Vector;
@@ -22,12 +21,13 @@ public class BlackListDataBase {
 
             /* 检查TOP表是否存在 */
             try {
-                stmt.executeQuery("select * from BLACKLIST;");
+                stmt.executeQuery("select ID from BLACKLIST;");
             } catch (SQLSyntaxErrorException e) {
                 if (e.getErrorCode() == 1146) {
                     System.out.println("BLACKLIST表不存在不存在，创建");
-                    stmt.execute("create table BLACKLIST(ID BIGINT UNSIGNED default 0 not null);");
-                    stmt.execute("alter table BLACKLIST add constraint BLACKLIST_pk primary key (ID);");
+                    stmt.execute("create table BLACKLIST(ID BIGINT UNSIGNED NOT NULL," +
+                            "ADDTIME TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                            "CONSTRAINT BLACKLIST_pk PRIMARY KEY (ID));");
                     stmt.execute("create index BLACKLIST_ID_index on BLACKLIST (ID);");
                 } else {
                     e.printStackTrace();
@@ -58,35 +58,51 @@ public class BlackListDataBase {
         Long Id = Get.At2Long(ID);
         if (Id == null) return null;
         try {
-            if (!stmt.executeQuery("SELECT ID FROM BLACKLIST WHERE ID=" + Id + ';').next()) {
-                stmt.execute("INSERT INTO BLACKLIST VALUE (" + Id + ");");
-                return Id.toString();
-            } else return null;
+            try {
+                stmt.execute("INSERT INTO BLACKLIST (ID, ADDTIME) VALUES (" + Id + ", DEFAULT);");
+            } catch (SQLIntegrityConstraintViolationException e) {
+                if (e.getErrorCode() != 1062)
+                    e.printStackTrace();
+                return null;
+            }
+            return Id.toString();
         } catch (SQLException e) {
+            System.err.println("ErrCode = " + e.getErrorCode());
             e.printStackTrace();
             return null;
         }
     }
 
-    public String ListBlackList() {
-        StringBuilder str = new StringBuilder();
-        int count = 0;
+    public Vector<Long> ListBlackList() {
+        Vector<Long> backlist = new Vector<>();
         try {
             ResultSet rs = stmt.executeQuery("SELECT * FROM BLACKLIST;");
             while (rs.next()) {
-                str.append(rs.getLong("ID")).append('\n');
-                ++count;
+                Long e = rs.getLong("ID");
+                if (e != null)
+                    backlist.add(e);
             }
         } catch (SQLException e) {
+            System.err.println("ErrCode = " + e.getErrorCode());
             e.printStackTrace();
-            return "err " + e.getMessage();
+            return null;
+        }
+        return backlist;
+    }
+
+    public String StringBlackList() {
+        StringBuilder str = new StringBuilder();
+        int count = 0;
+        for (Long i : ListBlackList()) {
+            str.append(i).append('\n');
+            ++count;
         }
         str.insert(0, "总计" + count + '\n');
         str.deleteCharAt(str.length() - 1);
         return str.toString();
     }
 
-    public boolean Check(String ID) {
+    public boolean CheckOne(String ID) {
         try {
             ResultSet rs = stmt.executeQuery("SELECT * FROM BLACKLIST WHERE ID=" + ID + ';');
             return rs.next();
@@ -98,7 +114,7 @@ public class BlackListDataBase {
 
     public String SQL_Eval(String sql, Boolean write) {
         try {
-            if(write) {
+            if (write) {
                 String s = stmt.execute(sql) ? "execute return true" : "execute return false";
                 return stmt.getUpdateCount() + " rows retrieved " + s;
             } else {

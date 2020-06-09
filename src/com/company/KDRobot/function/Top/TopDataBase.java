@@ -37,7 +37,7 @@ public class TopDataBase {
                     }
                     stmt.execute("UPDATE TOP SET LAST_MSG_TIME=CURRENT_TIMESTAMP() WHERE ID=0;");
                 } else {
-                    stmt.execute("INSERT INTO TOP VALUES (0, 0, 0, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
+                    stmt.execute("INSERT INTO TOP VALUES (0, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
                 }
             } catch (SQLException throwables) {
                 throwables.printStackTrace();
@@ -68,15 +68,16 @@ public class TopDataBase {
                             "TODAY BIGINT UNSIGNED default 0 not null," +
                             "`ALL` BIGINT UNSIGNED default 0 not null," +
                             "LAST_MSG VARCHAR(100) null," +
+                            "`REPEAT` TINYINT UNSIGNED NULL," +
                             "LAST_MSG_TIME TIMESTAMP null," +
                             "`KILL` SMALLINT UNSIGNED default 0 not null," +
-                            "TICKET SMALLINT UNSIGNED default 1 not null);");
-                    stmt.execute("alter table TOP add constraint TOP_pk primary key (ID);");
+                            "TICKET SMALLINT UNSIGNED default 1 not null," +
+                            "CONSTRAINT TOP_pk PRIMARY KEY (ID));");
                     stmt.execute("create index TOP_ALL_index on TOP (`ALL`);");
                     stmt.execute("create index TOP_ID_index on TOP (ID);");
                     stmt.execute("create index TOP_TODAY_index on TOP (TODAY);");
                     /* 添加用于记录保存时间的0号 */
-                    stmt.execute("INSERT INTO TOP VALUES (0, 0, 0, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
+                    stmt.execute("INSERT INTO TOP VALUES (0, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
                 } else {
                     e.printStackTrace();
                 }
@@ -91,20 +92,50 @@ public class TopDataBase {
         refreshTimer.Start();
     }
 
-    public void Add(Long ID) {
+    public Boolean Add(Long ID, String msg, boolean permissions) {
+        String s = msg;
+        boolean ban = false;
+
+        /* 截断长度100 */
+        if (s.length() > 100) s = msg.substring(0, 100);
         try {
-            ResultSet rs = stmt.executeQuery("SELECT TODAY,`ALL` FROM TOP WHERE ID=" + ID + ";");
+            /* 获取用户信息 */
+            ResultSet rs = stmt.executeQuery("SELECT LAST_MSG,`REPEAT` FROM TOP WHERE ID=" + ID + ";");
+
+            /* 获取到信息 */
             if (rs.next()) {
+                /* 设置重复次数 */
+                String c = "0";
+
+                /* 不是管理 */
+                if (!permissions) {
+                    /* 获取上次发言内容 */
+                    String lastmsg = rs.getString(1);
+
+                    /* 如果重复加1 */
+                    if (lastmsg != null && lastmsg.equals(s)) {
+                        c = "`REPEAT`+1";
+
+                        /* 重复超上限禁言 */
+                        if (rs.getInt(2) + 1 >= 5) ban = true;
+                    }
+                }
+
+                /* 更新数据库 */
                 stmt.execute("UPDATE TOP " +
-                        "SET TODAY=TODAY + 1,`ALL`=`ALL` + 1" +
-                        ",LAST_MSG_TIME=CURRENT_TIMESTAMP() " +
+                        "SET TODAY=TODAY + 1,`ALL`=`ALL` + 1," +
+                        "LAST_MSG='" + s + "'," +
+                        "`REPEAT`=" + c + ',' +
+                        "LAST_MSG_TIME=CURRENT_TIMESTAMP() " +
                         "WHERE ID=" + ID + ";");
             } else {
-                stmt.execute("INSERT INTO TOP VALUES (" + ID + ", 1, 1, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
+                /* 没获取到插入数据 */
+                stmt.execute("INSERT INTO TOP VALUES (" + ID + ", 1, 1, '" + s + "', 0, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return ban;
     }
 
     public Pair<Long, Long> getCheckToday(Long ID) {

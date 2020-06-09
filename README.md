@@ -92,16 +92,10 @@ post_url=http://127.0.0.1:5702
 <KDRobotConfig>
     <!--必填选项,MySQL登录信息-->
     <DataBase URL="jdbc:mysql://xxx.xxx.xxx.xxx:xxx?useSSL=false&amp;serverTimezone=GMT%2B8" NAME="xxx" PASSWORD="xxx"/>
-    <Group ID="123456789">
-        <!--可选选项,管理QQ号,需要和机器人有好友,会私聊发送一些通知,不填就不会发送-->
-        <Admin ID="987654321"/>
-        <!--必填选项,数据存储路径-->
-        <WorkSpace PATH="D:\xxx\xxx"/>
-    </Group>
+    <!--群Element，ID为群号，必填选项，Admin为可选选项,管理QQ号,需要和机器人有好友，带有对于机器人的最高权限,会私聊发送一些通知,不填就不会发送-->
+    <Group ID="123456789" Admin="987654321"/>
     <!--可以有多个-->
-    <Group ID="2222">
-        <WorkSpace PATH="D:\xxx\xxx"/>
-    </Group>
+    <Group ID="2222"/>
 </KDRobotConfig>
 ```
 然后启动机器人

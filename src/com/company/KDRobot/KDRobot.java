@@ -14,12 +14,10 @@ import cc.moecraft.icq.sender.returndata.ReturnData;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.logger.HyLogger;
 import com.company.KDRobot.function.*;
-import com.company.KDRobot.function.Adblock.Adblock;
 import com.company.KDRobot.function.MessageBord.MessageBord;
 import com.company.KDRobot.function.Top.Top;
 import com.company.KDRobot.function.sc.SuperCommand;
 
-import java.io.File;
 import java.sql.*;
 import java.util.regex.Pattern;
 
@@ -32,9 +30,8 @@ public class KDRobot extends IcqListener {
     private Top top;
     private TuringAPI turingAPI;
     private HyLogger logger;
-    private Adblock adblock;
+//    private Adblock adblock;
     private MessageBord Msg;
-    private AntiRefresh antiRefresh;
 
     public KDRobot(HyLogger logger, KDRobotCfg.Config cfg) {
         this.logger = logger;
@@ -62,21 +59,14 @@ public class KDRobot extends IcqListener {
 
         logger.log("数据库'Group" + cfg.dataBaseCfg.Group + "'连接成功");
 
-        String PATH = cfg.WorkSpace + '/' + cfg.GroupID.toString();
-        File d = new File(PATH);
-        if (!d.exists()) {
-            if (!d.mkdir()) System.err.println(PATH + " mkdir 错误");
-        }
-
         this.Admin = cfg.AdminID;
         this.GroupID = cfg.GroupID;
-        Msg = new MessageBord(logger, PATH);
         turingAPI = new TuringAPI("f4f88216f44c4fbc84f3ae03cc355300");
+        Msg = new MessageBord(cfg.dataBaseCfg, this.Admin, logger);
         sc = new SuperCommand(cfg.dataBaseCfg, this.Admin);
-        top = new Top(cfg.dataBaseCfg, logger, this.Admin);
+        top = new Top(cfg.dataBaseCfg, this.Admin, logger);
         cdTimer = new CDTimer(logger);
-        adblock = new Adblock(PATH, logger);
-        antiRefresh = new AntiRefresh();
+//        adblock = new Adblock(PATH, logger);
         cdTimer.AddCD("Turling", 10L);
         cdTimer.AddCD("New", 10L);
         cdTimer.AddCD("about", 60L);
@@ -92,9 +82,12 @@ public class KDRobot extends IcqListener {
         if (event.getGroupId().equals(GroupID)) {
             IcqHttpApi api = event.getHttpApi();
             ReturnData<RGroupMemberInfo> info = api.getGroupMemberInfo(event.getGroupId(), event.getSenderId());
-            boolean permissions = info.getData().getRole().equals("owner") || info.getData().getRole().equals("admin");
+            boolean permissions = info.getData().getRole().equals("owner") ||
+                    info.getData().getRole().equals("admin") ||
+                    (Admin != null && event.getSenderId().equals(Admin));
 
-            top.getMsg(event.getSenderId());
+            /* top统计以及刷屏禁言 */
+            top.getMsg(event, permissions);
 
             String msg = event.getMessage();
 
@@ -135,25 +128,6 @@ public class KDRobot extends IcqListener {
                 if (cdTimer.CD("at"))
                     event.respond("想要聊天？使用'bot t'命令和图灵机器人聊天");
                 return;
-            }
-
-            if (!permissions) {
-                antiRefresh.process(event);
-//                for (String img : Get.CQCode(msg, "image")) {
-//                    if (!adblock.check(img)) {
-//                        String m = "发现二维码，已后台记录，审核为广告会被bl。";
-//                        if (Admin != null) {
-//                            api.sendPrivateMsg(Admin, "群：" + event.getGroupId() + '\n'
-//                                    + event.getSenderId().toString() + '\n' + img.substring(1));
-//                            m += "\n误报请迅速联系后台管理" + Admin.toString();
-//                        }
-//                        event.respond(m);
-//                        api.deleteMsg(event.getMessageId());
-//                        api.setGroupBan(event.getGroupId(), event.getSenderId(), 3600 * 12);
-//                        logger.log("群:'" + event.getGroupId() + "' '" + event.getSenderId() + "'发现二维码");
-//                        return;
-//                    }
-//                }
             }
 
             String[] cmd = msg.split("\\s+");
@@ -219,7 +193,7 @@ public class KDRobot extends IcqListener {
             }
 
             if (cmd[0].equals("sc")) {
-                if(permissions || (Admin != null && event.getSenderId().equals(Admin)))
+                if (permissions)
                     sc.process(event, cmd);
             }
         }

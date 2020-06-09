@@ -7,6 +7,7 @@ import cc.moecraft.icq.sender.message.components.ComponentAt;
 import cc.moecraft.icq.sender.returndata.ReturnData;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.logger.HyLogger;
+import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.CDTimer;
 import com.company.KDRobot.function.Get;
 
@@ -57,12 +58,14 @@ public class MessageBord {
     private MessageBordDataBase db;
     private CDTimer timer;
     private TimeOut timeOut;
+    private Long Admin;
 
     private MessageBordDataBase.Message tmpmsg;
 
-    public MessageBord(HyLogger logger, String DataBasePath) {
+    public MessageBord(KDRobotCfg.DataBaseCfg dataBaseCfg, Long Admin, HyLogger logger) {
         tmpmsg = null;
-        db = new MessageBordDataBase(DataBasePath);
+        this.Admin = Admin;
+        db = new MessageBordDataBase(dataBaseCfg);
         timer = new CDTimer(logger);
         timeOut = new TimeOut(this);
         timer.AddCD("ls", 60L);
@@ -170,10 +173,12 @@ public class MessageBord {
             if (msg != null) {
                 IcqHttpApi api = event.getHttpApi();
                 ReturnData<RGroupMemberInfo> info = api.getGroupMemberInfo(event.getGroupId(), event.getSenderId());
-                boolean permissions = info.getData().getRole().equals("owner") || info.getData().getRole().equals("admin");
+                boolean permissions = info.getData().getRole().equals("owner") ||
+                        info.getData().getRole().equals("admin") ||
+                        (Admin != null && Admin.equals(event.getSenderId()));
                 if (permissions || msg.userID.equals(event.getSenderId())) {
-                    db.deleteMsg(ID);
-                    event.respond("成功删除");
+                    if (db.deleteMsg(ID)) event.respond("成功删除");
+                    else event.respond("错误");
                 } else event.respond("不是发帖者或者管理员,无权删除");
             } else event.respond("未找到此帖子");
         } else event.respond("输入有误");
@@ -192,14 +197,16 @@ public class MessageBord {
                 tmpmsg.title = tmpmsg.title.substring(0, 20);
             event.respond(new MessageBuilder()
                     .add(new ComponentAt(event.getSenderId()))
-                    .add(" 请在5分钟以内再次使用该命令输入正文,截断长度80字")
+                    .add(" 请在5分钟以内再次使用该命令输入正文,截断长度100字")
                     .toString());
             timeOut.start(300, event.getGroupId(), event.getHttpApi());
         } else if (tmpmsg.userID.equals(event.getSenderId())) {
             tmpmsg.body = event.getMessage().substring("bot msg push ".length());
-            if (tmpmsg.title.length() > 80)
-                tmpmsg.body = tmpmsg.body.substring(0, 80);
-            event.respond("发帖成功,帖子ID:" + db.pushMsg(tmpmsg));
+            if (tmpmsg.title.length() > 100)
+                tmpmsg.body = tmpmsg.body.substring(0, 100);
+            Long ID = db.pushMsg(tmpmsg);
+            if (ID == null) event.respond("错误");
+            else event.respond("发帖成功,帖子ID:" + ID);
             timeOut.stop();
             tmpmsg = null;
         }

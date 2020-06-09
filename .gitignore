@@ -15,6 +15,7 @@ hs_err_pid*
 
 out
 msg
+logs
 DataBase
 .idea
 Config.xml

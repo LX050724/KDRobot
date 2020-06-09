@@ -8,9 +8,6 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
 import java.util.Vector;
 
 public class KDRobotCfg {
@@ -26,7 +23,6 @@ public class KDRobotCfg {
         public Long GroupID;
         public Long AdminID;
         public boolean AdminEnable;
-        public String WorkSpace;
 
         public Config() {
             GroupID = AdminID = null;
@@ -37,19 +33,16 @@ public class KDRobotCfg {
         @Override
         public String toString() {
             return "Config{" +
-                    "GroupID=" + GroupID +
+                    "dataBaseCfg=" + dataBaseCfg +
+                    ", GroupID=" + GroupID +
                     ", AdminID=" + AdminID +
                     ", AdminEnable=" + AdminEnable +
-                    ", WorkSpace='" + WorkSpace + '\'' +
                     '}';
         }
     }
 
     private Vector<Config> ConfigList;
     private String ErrMsg;
-
-    private Connection conn;
-    private Statement stmt;
 
     private String URL;
     private String NAME;
@@ -98,24 +91,10 @@ public class KDRobotCfg {
                 Config cfg = new Config();
                 Element GroupElement = (Element) GroupList.item(i);
                 cfg.GroupID = Long.parseLong(GroupElement.getAttribute("ID"));
-
-                NodeList AdminList = GroupElement.getElementsByTagName("Admin");
-                if (AdminList.getLength() == 1) {
-                    Element AdminElement = (Element) AdminList.item(0);
-                    cfg.AdminID = Long.parseLong(AdminElement.getAttribute("ID"));
+                String admin_s = GroupElement.getAttribute("Admin");
+                if (!admin_s.isEmpty()) {
+                    cfg.AdminID = Long.parseLong(admin_s);
                     cfg.AdminEnable = true;
-                } else if (AdminList.getLength() > 1) {
-                    ErrMsg = (cfg.GroupID + "中有多个Admin");
-                    return;
-                }
-
-                NodeList WorkSpaceList = GroupElement.getElementsByTagName("WorkSpace");
-                if (WorkSpaceList.getLength() == 1) {
-                    Element WorkSpaceElement = (Element) WorkSpaceList.item(0);
-                    cfg.WorkSpace = WorkSpaceElement.getAttribute("PATH");
-                } else {
-                    ErrMsg = (cfg.GroupID + "中没有或有多个WorkSpace");
-                    return;
                 }
                 cfg.dataBaseCfg.NAME = NAME;
                 cfg.dataBaseCfg.PASSWORD = PASSWORD;

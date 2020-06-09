@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+//TODO 以后要修改为全部在内存中处理完成
 public class Adblock {
     private final String PATH;
     private HyLogger logger;

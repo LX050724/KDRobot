@@ -26,13 +26,10 @@ public class MessageBordDataBase {
     }
 
     private Statement stmt;
-    private Connection conn;
 
-    public MessageBordDataBase(KDRobotCfg.DataBaseCfg dataBaseCfg) {
+    public MessageBordDataBase(Statement stmt) {
+        this.stmt = stmt;
         try {
-            conn = DriverManager.getConnection(dataBaseCfg.URL, dataBaseCfg.NAME, dataBaseCfg.PASSWORD);
-            stmt = conn.createStatement();
-
             /* 检查MSGBORD表是否存在 */
             try {
                 stmt.execute("select ID from MSGBORD;");
@@ -53,7 +50,6 @@ public class MessageBordDataBase {
                 }
             }
         } catch (Exception e) {
-            System.err.println(dataBaseCfg.URL + "连接连接失败\n\n");
             e.printStackTrace();
             System.exit(-1);
         }

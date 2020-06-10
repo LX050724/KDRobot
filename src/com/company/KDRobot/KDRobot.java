@@ -35,11 +35,11 @@ public class KDRobot extends IcqListener {
 
     public KDRobot(HyLogger logger, KDRobotCfg.Config cfg) {
         this.logger = logger;
-
+        Statement stmt = null;
         /* 检查数据库是否存在 */
         try {
             Connection conn = DriverManager.getConnection(cfg.dataBaseCfg.URL, cfg.dataBaseCfg.NAME, cfg.dataBaseCfg.PASSWORD);
-            Statement stmt = conn.createStatement();
+            stmt = conn.createStatement();
             try {
                 stmt.execute("USE Group" + cfg.dataBaseCfg.Group);
             } catch (SQLSyntaxErrorException e) {
@@ -51,26 +51,27 @@ public class KDRobot extends IcqListener {
             }
             stmt.close();
             conn.close();
+            /* 设置到特定库的URL */
+            int index = cfg.dataBaseCfg.URL.indexOf('?');
+            cfg.dataBaseCfg.URL =cfg.dataBaseCfg.URL.substring(0, index) +
+                    "/Group" + cfg.dataBaseCfg.Group +
+                    cfg.dataBaseCfg.URL.substring(index);
+            conn = DriverManager.getConnection(cfg.dataBaseCfg.URL, cfg.dataBaseCfg.NAME, cfg.dataBaseCfg.PASSWORD);
+            stmt = conn.createStatement();
         } catch (Exception e) {
             System.err.println(cfg.dataBaseCfg.URL + "连接失败\n\n");
             e.printStackTrace();
             System.exit(-1);
         }
 
-        /* 设置到特定库的URL */
-        int index = cfg.dataBaseCfg.URL.indexOf('?');
-        cfg.dataBaseCfg.URL =cfg.dataBaseCfg.URL.substring(0, index) +
-                "/Group" + cfg.dataBaseCfg.Group +
-                cfg.dataBaseCfg.URL.substring(index);
-
         logger.log("数据库'" + cfg.dataBaseCfg.URL + "'连接成功");
 
         this.Admin = cfg.AdminID;
         this.GroupID = cfg.GroupID;
         turingAPI = new TuringAPI("f4f88216f44c4fbc84f3ae03cc355300");
-        Msg = new MessageBord(cfg.dataBaseCfg, this.Admin, logger);
-        sc = new SuperCommand(cfg.dataBaseCfg, this.Admin);
-        top = new Top(cfg.dataBaseCfg, this.Admin, logger);
+        Msg = new MessageBord(stmt, this.Admin, logger);
+        sc  = new SuperCommand(stmt, this.Admin);
+        top = new Top(stmt, this.Admin, logger);
         cdTimer = new CDTimer(logger);
 //        adblock = new Adblock(PATH, logger);
         cdTimer.AddCD("Turling", 10L);

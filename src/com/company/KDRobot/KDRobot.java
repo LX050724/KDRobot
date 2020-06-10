@@ -57,7 +57,13 @@ public class KDRobot extends IcqListener {
             System.exit(-1);
         }
 
-        logger.log("数据库'Group" + cfg.dataBaseCfg.Group + "'连接成功");
+        /* 设置到特定库的URL */
+        int index = cfg.dataBaseCfg.URL.indexOf('?');
+        cfg.dataBaseCfg.URL =cfg.dataBaseCfg.URL.substring(0, index) +
+                "/Group" + cfg.dataBaseCfg.Group +
+                cfg.dataBaseCfg.URL.substring(index);
+
+        logger.log("数据库'" + cfg.dataBaseCfg.URL + "'连接成功");
 
         this.Admin = cfg.AdminID;
         this.GroupID = cfg.GroupID;

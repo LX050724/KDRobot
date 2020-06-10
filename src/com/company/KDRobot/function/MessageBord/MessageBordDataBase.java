@@ -33,9 +33,6 @@ public class MessageBordDataBase {
             conn = DriverManager.getConnection(dataBaseCfg.URL, dataBaseCfg.NAME, dataBaseCfg.PASSWORD);
             stmt = conn.createStatement();
 
-            /* 前面已经检查过数据库存在了，直接使用 */
-            stmt.execute("USE Group" + dataBaseCfg.Group);
-
             /* 检查MSGBORD表是否存在 */
             try {
                 stmt.execute("select ID from MSGBORD;");

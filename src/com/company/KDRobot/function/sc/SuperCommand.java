@@ -8,6 +8,7 @@ import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.Get;
 
+import java.sql.Statement;
 import java.util.List;
 import java.util.Vector;
 
@@ -15,8 +16,8 @@ public class SuperCommand {
     private BlackListDataBase db;
     private Long Admin;
 
-    public SuperCommand(KDRobotCfg.DataBaseCfg dataBaseCfg, Long Admin) {
-        db = new BlackListDataBase(dataBaseCfg);
+    public SuperCommand(Statement stmt, Long Admin) {
+        db = new BlackListDataBase(stmt);
         this.Admin = Admin;
     }
 

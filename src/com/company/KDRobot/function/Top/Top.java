@@ -10,6 +10,7 @@ import com.company.KDRobot.function.CDTimer;
 import com.company.KDRobot.function.Get;
 import javafx.util.Pair;
 
+import java.sql.Statement;
 import java.util.*;
 
 public class Top {
@@ -17,9 +18,9 @@ public class Top {
     private CDTimer cdTimer;
     private Long Admin;
 
-    public Top(KDRobotCfg.DataBaseCfg dataBaseCfg, Long Admin, HyLogger logger) {
+    public Top(Statement stmt, Long Admin, HyLogger logger) {
         this.Admin = Admin;
-        db = new TopDataBase(dataBaseCfg);
+        db = new TopDataBase(stmt);
         cdTimer = new CDTimer(logger);
         cdTimer.AddCD("top", 300L);
         cdTimer.AddCD("today", 300L);

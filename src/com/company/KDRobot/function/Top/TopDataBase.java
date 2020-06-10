@@ -47,13 +47,10 @@ public class TopDataBase {
 
     private RefreshTimer refreshTimer;
     private Statement stmt;
-    private Connection conn;
 
-    public TopDataBase(KDRobotCfg.DataBaseCfg dataBaseCfg) {
+    public TopDataBase(Statement stmt) {
+        this.stmt = stmt;
         try {
-            conn = DriverManager.getConnection(dataBaseCfg.URL, dataBaseCfg.NAME, dataBaseCfg.PASSWORD);
-            stmt = conn.createStatement();
-
             /* 检查TOP表是否存在 */
             try {
                 stmt.executeQuery("select * from TOP;");
@@ -80,11 +77,9 @@ public class TopDataBase {
                 }
             }
         } catch (Exception e) {
-            System.err.println(dataBaseCfg.URL + "连接连接失败\n\n");
             e.printStackTrace();
             System.exit(-1);
         }
-
         refreshTimer = new RefreshTimer(stmt);
         refreshTimer.Start();
     }

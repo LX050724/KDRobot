@@ -11,6 +11,7 @@ import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.CDTimer;
 import com.company.KDRobot.function.Get;
 
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
@@ -62,10 +63,10 @@ public class MessageBord {
 
     private MessageBordDataBase.Message tmpmsg;
 
-    public MessageBord(KDRobotCfg.DataBaseCfg dataBaseCfg, Long Admin, HyLogger logger) {
+    public MessageBord(Statement stmt, Long Admin, HyLogger logger) {
         tmpmsg = null;
         this.Admin = Admin;
-        db = new MessageBordDataBase(dataBaseCfg);
+        db = new MessageBordDataBase(stmt);
         timer = new CDTimer(logger);
         timeOut = new TimeOut(this);
         timer.AddCD("ls", 60L);

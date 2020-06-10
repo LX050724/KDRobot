@@ -54,9 +54,6 @@ public class TopDataBase {
             conn = DriverManager.getConnection(dataBaseCfg.URL, dataBaseCfg.NAME, dataBaseCfg.PASSWORD);
             stmt = conn.createStatement();
 
-            /* 前面已经检查过数据库存在了，直接使用 */
-            stmt.execute("USE Group" + dataBaseCfg.Group);
-
             /* 检查TOP表是否存在 */
             try {
                 stmt.executeQuery("select * from TOP;");

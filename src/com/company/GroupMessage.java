@@ -20,12 +20,7 @@ public class GroupMessage extends IcqListener {
         long GroupID = event.getGroupId();
         System.out.println(String.format("In Group %d, User %d:%s",
                 GroupID, event.getSender().getId(), event.message));
-//        switch (event.getGroupId().intValue()) {
-//            case 399188082:
         Grouptest(event);
-//                break;
-//
-//        }
     }
 
     @EventHandler
@@ -61,12 +56,7 @@ public class GroupMessage extends IcqListener {
     private void Grouptest(EventGroupMessage event) {
         long GroupID = event.getGroupId();
         long ID = event.getSender().getId();
-
-//        switch ((int) ID) {
-//            case 1790931015:
         WriteMsg(GroupID, ID, event.getMessage());
-//                break;
-//        }
     }
 
     private void WriteMsg(long GroupID, long ID, String msg) {

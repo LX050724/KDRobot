@@ -1,7 +1,5 @@
 package com.company.KDRobot.function.MessageBord;
 
-import com.company.KDRobot.KDRobotCfg;
-
 import java.sql.*;
 import java.util.Vector;
 
@@ -59,7 +57,7 @@ public class MessageBordDataBase {
         Vector<Message> vector = new Vector<>();
 
         try {
-            stmt.execute("DELETE FROM MSGBORD WHERE CURRENT_TIMESTAMP() - TIME > 3600000 * 24 * 3;");
+            stmt.execute("DELETE FROM MSGBORD WHERE CURRENT_TIMESTAMP() - TIME > 3600 * 24 * 3;");
             ResultSet rs = stmt.executeQuery("SELECT * FROM MSGBORD;");
             while (rs.next()) {
                 Message msg = new Message();
@@ -87,13 +85,13 @@ public class MessageBordDataBase {
             if (rs.next()) {
                 return rs.getLong(1);
             } else return null;
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
             return null;
         }
     }
 
-    public boolean deleteMsg(Long MsgID) {
+    public boolean deleteMsg(int MsgID) {
         try {
             stmt.execute("DELETE FROM MSGBORD WHERE ID=" + MsgID + ';');
             return stmt.getUpdateCount() == 1;
@@ -103,8 +101,9 @@ public class MessageBordDataBase {
         return false;
     }
 
-    public Message find(Long MsgID) {
+    public Message find(int MsgID) {
         try {
+            stmt.execute("DELETE FROM MSGBORD WHERE CURRENT_TIMESTAMP() - TIME > 3600 * 24 * 3;");
             ResultSet rs = stmt.executeQuery("SELECT * FROM MSGBORD WHERE ID=" + MsgID + ';');
             if (rs.next()) {
                 Message msg = new Message();

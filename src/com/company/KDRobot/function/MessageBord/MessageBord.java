@@ -148,7 +148,7 @@ public class MessageBord {
     private void process_look(EventGroupMessage event, String[] cmd) {
         Long ID = Get.At2Long(cmd[3]);
         if (ID != null) {
-            MessageBordDataBase.Message msg = db.find(ID);
+            MessageBordDataBase.Message msg = db.find(ID.intValue());
             if (msg != null) {
                 SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 event.respond(String.format("发帖者%s\n" +
@@ -170,7 +170,7 @@ public class MessageBord {
     private void process_del(EventGroupMessage event, String[] cmd) {
         Long ID = Get.At2Long(cmd[3]);
         if (ID != null) {
-            MessageBordDataBase.Message msg = db.find(ID);
+            MessageBordDataBase.Message msg = db.find(ID.intValue());
             if (msg != null) {
                 IcqHttpApi api = event.getHttpApi();
                 ReturnData<RGroupMemberInfo> info = api.getGroupMemberInfo(event.getGroupId(), event.getSenderId());
@@ -178,7 +178,7 @@ public class MessageBord {
                         info.getData().getRole().equals("admin") ||
                         (Admin != null && Admin.equals(event.getSenderId()));
                 if (permissions || msg.userID.equals(event.getSenderId())) {
-                    if (db.deleteMsg(ID)) event.respond("成功删除");
+                    if (db.deleteMsg(ID.intValue())) event.respond("成功删除");
                     else event.respond("错误");
                 } else event.respond("不是发帖者或者管理员,无权删除");
             } else event.respond("未找到此帖子");

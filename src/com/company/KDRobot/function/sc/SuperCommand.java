@@ -21,7 +21,7 @@ public class SuperCommand {
         this.Admin = Admin;
     }
 
-    public void peocess_bl(EventGroupMessage event, String[] cmd) {
+    private void peocess_bl(EventGroupMessage event, String[] cmd) {
         if (cmd.length < 3) return;
         switch (cmd[2]) {
             case "ls": {
@@ -53,10 +53,10 @@ public class SuperCommand {
                 break;
             }
             default: {
-                String ID = db.AddBlackList(cmd[2]);
+                Long ID = db.AddBlackList(cmd[2]);
                 if (ID != null) {
                     event.respond(ID + "成功添加至黑名单");
-                    event.getHttpApi().setGroupKick(event.getGroupId(), Long.parseLong(ID));
+                    event.getHttpApi().setGroupKick(event.getGroupId(), ID);
                 } else {
                     event.respond("添加失败,有可能是已经添加过或拼写错误");
                 }
@@ -126,5 +126,9 @@ public class SuperCommand {
             return false;
         }
         return true;
+    }
+
+    public boolean Addbl(Long ID) {
+        return db.AddBlackList(ID) != null;
     }
 }

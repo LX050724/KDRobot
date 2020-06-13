@@ -19,6 +19,7 @@ import com.company.KDRobot.function.Top.Top;
 import com.company.KDRobot.function.sc.SuperCommand;
 
 import java.sql.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
@@ -30,7 +31,7 @@ public class KDRobot extends IcqListener {
     private Top top;
     private TuringAPI turingAPI;
     private HyLogger logger;
-//    private Adblock adblock;
+    //    private Adblock adblock;
     private MessageBord Msg;
 
     public KDRobot(HyLogger logger, KDRobotCfg.Config cfg) {
@@ -53,7 +54,7 @@ public class KDRobot extends IcqListener {
             conn.close();
             /* 设置到特定库的URL */
             int index = cfg.dataBaseCfg.URL.indexOf('?');
-            cfg.dataBaseCfg.URL =cfg.dataBaseCfg.URL.substring(0, index) +
+            cfg.dataBaseCfg.URL = cfg.dataBaseCfg.URL.substring(0, index) +
                     "/Group" + cfg.dataBaseCfg.Group +
                     cfg.dataBaseCfg.URL.substring(index);
             conn = DriverManager.getConnection(cfg.dataBaseCfg.URL, cfg.dataBaseCfg.NAME, cfg.dataBaseCfg.PASSWORD);
@@ -70,7 +71,7 @@ public class KDRobot extends IcqListener {
         this.GroupID = cfg.GroupID;
         turingAPI = new TuringAPI("f4f88216f44c4fbc84f3ae03cc355300");
         Msg = new MessageBord(stmt, this.Admin, logger);
-        sc  = new SuperCommand(stmt, this.Admin);
+        sc = new SuperCommand(stmt, this.Admin);
         top = new Top(stmt, this.Admin, logger);
         cdTimer = new CDTimer(logger);
 //        adblock = new Adblock(PATH, logger);
@@ -135,6 +136,21 @@ public class KDRobot extends IcqListener {
                 if (cdTimer.CD("at"))
                     event.respond("想要聊天？使用'bot t'命令和图灵机器人聊天");
                 return;
+            }
+
+            if (!permissions) for (String contact : Get.CQCode(msg, "contact")) {
+                Pattern r = Pattern.compile("^\\[CQ:contact,id=(.*),type=group]");
+                Matcher m = r.matcher(contact);
+                if (m.find()) {
+                    String id = m.group(1);
+                    if (!id.equals(event.getGroupId().toString())) {
+                        if (sc.Addbl(event.getSenderId()))
+                            event.respond("分享群，添加黑名单");
+                        else
+                            event.respond("添加黑名单错误");
+                        event.getHttpApi().setGroupKick(event.getGroupId(), event.getSenderId());
+                    }
+                }
             }
 
             String[] cmd = msg.split("\\s+");

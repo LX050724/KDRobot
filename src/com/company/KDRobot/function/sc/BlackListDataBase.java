@@ -47,23 +47,27 @@ public class BlackListDataBase {
         }
     }
 
-    public String AddBlackList(String ID) {
-        Long Id = Get.At2Long(ID);
-        if (Id == null) return null;
+    public Long AddBlackList(Long ID) {
         try {
             try {
-                stmt.execute("INSERT INTO BLACKLIST (ID, ADDTIME) VALUES (" + Id + ", DEFAULT);");
+                stmt.execute("INSERT INTO BLACKLIST (ID, ADDTIME) VALUES (" + ID + ", DEFAULT);");
             } catch (SQLIntegrityConstraintViolationException e) {
                 if (e.getErrorCode() != 1062)
                     e.printStackTrace();
                 return null;
             }
-            return Id.toString();
+            return ID;
         } catch (SQLException e) {
             System.err.println("ErrCode = " + e.getErrorCode());
             e.printStackTrace();
-            return null;
         }
+        return null;
+    }
+
+    public Long AddBlackList(String ID) {
+        Long Id = Get.At2Long(ID);
+        if (Id == null) return null;
+        return AddBlackList(Id);
     }
 
     public Vector<Long> ListBlackList() {

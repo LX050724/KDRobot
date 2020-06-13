@@ -5,7 +5,6 @@ import cc.moecraft.icq.event.events.notice.groupmember.increase.EventNoticeGroup
 import cc.moecraft.icq.sender.IcqHttpApi;
 import cc.moecraft.icq.sender.message.MessageBuilder;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
-import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.Get;
 
 import java.sql.Statement;

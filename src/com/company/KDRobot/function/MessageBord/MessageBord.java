@@ -7,7 +7,6 @@ import cc.moecraft.icq.sender.message.components.ComponentAt;
 import cc.moecraft.icq.sender.returndata.ReturnData;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.logger.HyLogger;
-import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.CDTimer;
 import com.company.KDRobot.function.Get;
 
@@ -193,7 +192,7 @@ public class MessageBord {
         if (tmpmsg == null) {
             tmpmsg = new MessageBordDataBase.Message();
             tmpmsg.userID = event.getSenderId();
-            tmpmsg.title = event.getMessage().substring("bot msg push ".length());
+            tmpmsg.title = event.getMessage().substring(event.getMessage().indexOf("push") + 5);
             if (tmpmsg.title.length() > 20)
                 tmpmsg.title = tmpmsg.title.substring(0, 20);
             event.respond(new MessageBuilder()
@@ -202,7 +201,7 @@ public class MessageBord {
                     .toString());
             timeOut.start(300, event.getGroupId(), event.getHttpApi());
         } else if (tmpmsg.userID.equals(event.getSenderId())) {
-            tmpmsg.body = event.getMessage().substring("bot msg push ".length());
+            tmpmsg.body = event.getMessage().substring(event.getMessage().indexOf("push") + 5);
             if (tmpmsg.title.length() > 100)
                 tmpmsg.body = tmpmsg.body.substring(0, 100);
             Long ID = db.pushMsg(tmpmsg);

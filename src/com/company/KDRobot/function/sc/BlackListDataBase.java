@@ -1,6 +1,5 @@
 package com.company.KDRobot.function.sc;
 
-import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.Get;
 
 import java.sql.*;

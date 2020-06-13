@@ -97,7 +97,8 @@ public class KDRobot extends IcqListener {
             /* top统计以及刷屏禁言 */
             top.getMsg(event, permissions);
 
-            String msg = event.getMessage();
+            /* 去除首尾空格 */
+            String msg = event.getMessage().trim();
 
             if (msg.equals("STFW") && cdTimer.CD("STFW")) {
                 event.respond("当你提问的时候，别人说STFW是什么意思?\n" +
@@ -179,7 +180,7 @@ public class KDRobot extends IcqListener {
 //                        break;
                     case "t":
                         if (cdTimer.CD("Turling")) {
-                            String m = event.getMessage().substring(6);
+                            String m = event.getMessage().substring(event.getMessage().indexOf("t", 4) + 2);
                             String r = turingAPI.machine(m);
                             logger.log(String.format("接到%d的图灵消息:'%s',回复:'%s'", event.getSenderId(), m, r));
                             event.respond(r);
@@ -196,9 +197,9 @@ public class KDRobot extends IcqListener {
                             break;
                         }
                         if (permissions || cdTimer.CD("baike")) {
-                            String keyword = msg.substring(10);
+                            String keyword = msg.substring(msg.indexOf("baike") + 6);
                             event.respond(keyword + "百度百科：\n" + BaiKe.GetBaiKe(keyword));
-                        }else{
+                        } else {
                             event.respond("baike" + " CD Time last " + cdTimer.GetLastTime("baike"));
                         }
                         break;

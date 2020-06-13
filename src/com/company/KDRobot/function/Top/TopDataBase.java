@@ -1,6 +1,5 @@
 package com.company.KDRobot.function.Top;
 
-import com.company.KDRobot.KDRobotCfg;
 import javafx.util.Pair;
 
 import java.sql.*;

@@ -5,7 +5,6 @@ import cc.moecraft.icq.sender.IcqHttpApi;
 import cc.moecraft.icq.sender.returndata.ReturnData;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.logger.HyLogger;
-import com.company.KDRobot.KDRobotCfg;
 import com.company.KDRobot.function.CDTimer;
 import com.company.KDRobot.function.Get;
 import javafx.util.Pair;

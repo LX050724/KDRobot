@@ -198,6 +198,8 @@ public class KDRobot extends IcqListener {
                         if (permissions || cdTimer.CD("baike")) {
                             String keyword = msg.substring(10);
                             event.respond(keyword + "百度百科：\n" + BaiKe.GetBaiKe(keyword));
+                        }else{
+                            event.respond("baike" + " CD Time last " + cdTimer.GetLastTime("baike"));
                         }
                         break;
                     case "help":

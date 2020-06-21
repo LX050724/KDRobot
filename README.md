@@ -76,6 +76,8 @@
 >
 >>### 二维码拦截
 >>发现图片带有二维码之后尝试撤回并禁言发送者,并后台通知管理员进行处理(已关闭)
+>>### 群分享拦截
+>>发现非管理员发送分享群（本的群的分享没关系）自动bl起飞
 
 ## 使用方法
 编写CQHTTP插件配置,放在酷Q目录下`app\io.github.richardchien.coolqhttpapi\config.ini`
@@ -101,6 +103,6 @@ post_url=http://127.0.0.1:5702
 然后启动机器人
 
 ```bash
-java -jar <Config> [color]
+java -jar CQRobot.jar <Config> [color]
 ```
 Config为上述配置文件路径 color为颜色设置,直接输入color启动颜色,命令行参数功能目前尚不完善,不能调换顺序

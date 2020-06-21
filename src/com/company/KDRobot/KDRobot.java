@@ -150,6 +150,7 @@ public class KDRobot extends IcqListener {
                         else
                             event.respond("添加黑名单错误");
                         event.getHttpApi().setGroupKick(event.getGroupId(), event.getSenderId());
+                        event.getHttpApi().deleteMsg(event.getMessageId());
                     }
                 }
             }
@@ -180,7 +181,8 @@ public class KDRobot extends IcqListener {
 //                        break;
                     case "t":
                         if (cdTimer.CD("Turling")) {
-                            String m = event.getMessage().substring(event.getMessage().indexOf("t", 4) + 2);
+                            String m = event.getMessage();
+                            m =  m.substring(m.indexOf("t", m.indexOf("bot") + 4) + 2);
                             String r = turingAPI.machine(m);
                             logger.log(String.format("接到%d的图灵消息:'%s',回复:'%s'", event.getSenderId(), m, r));
                             event.respond(r);
@@ -251,7 +253,7 @@ public class KDRobot extends IcqListener {
     public void onENGMKEvent(EventNoticeGroupMemberKick event) {
         if (event.getGroupId().equals(GroupID)) {
             IcqHttpApi api = event.getHttpApi();
-            api.sendGroupMsg(event.getGroupId(), String.format("%d 被狗管理管理 %s 踢了！",
+            api.sendGroupMsg(event.getGroupId(), String.format("%d 被狗管理 %s 踢了！",
                     event.getUserId(), Get.ID2Name(api, event.getGroupId(), event.getOperatorId())));
             logger.log(String.format("群:%d, %d 被%d踢了", event.getGroupId(), event.getUserId(), event.getOperatorId()));
         }

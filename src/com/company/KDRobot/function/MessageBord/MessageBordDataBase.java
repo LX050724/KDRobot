@@ -1,5 +1,7 @@
 package com.company.KDRobot.function.MessageBord;
 
+import com.company.KDRobot.function.Get;
+
 import java.sql.*;
 import java.util.Vector;
 
@@ -75,13 +77,17 @@ public class MessageBordDataBase {
     }
 
     public Long pushMsg(Message msg) {
+        /* 替换转义字符 */
+        String title = Get.SQLstr(msg.title);
+        String body = Get.SQLstr(msg.body);
+
         try {
             stmt.execute(String.format(
                     "INSERT INTO MSGBORD (USERID, TITLE, MSG, TIME) VALUES (%d, '%s', '%s', DEFAULT);",
-                    msg.userID, msg.title, msg.body));
+                    msg.userID, title, body));
             ResultSet rs = stmt.executeQuery(String.format(
                     "SELECT ID FROM MSGBORD WHERE USERID='%d' AND TITLE='%S' AND MSG='%S';",
-                    msg.userID, msg.title, msg.body));
+                    msg.userID, title, body));
             if (rs.next()) {
                 return rs.getLong(1);
             } else return null;

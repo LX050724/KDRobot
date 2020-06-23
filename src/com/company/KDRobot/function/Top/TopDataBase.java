@@ -1,5 +1,6 @@
 package com.company.KDRobot.function.Top;
 
+import com.company.KDRobot.function.Get;
 import javafx.util.Pair;
 
 import java.sql.*;
@@ -60,7 +61,7 @@ public class TopDataBase {
                             "ID BIGINT UNSIGNED default 0 not null," +
                             "TODAY BIGINT UNSIGNED default 0 not null," +
                             "`ALL` BIGINT UNSIGNED default 0 not null," +
-                            "LAST_MSG VARCHAR(100) null," +
+                            "LAST_MSG VARCHAR(255) null," +
                             "`REPEAT` TINYINT UNSIGNED NULL," +
                             "LAST_MSG_TIME TIMESTAMP null," +
                             "`KILL` SMALLINT UNSIGNED default 0 not null," +
@@ -88,7 +89,11 @@ public class TopDataBase {
         boolean ban = false;
 
         /* 截断长度100 */
-        if (s.length() > 100) s = msg.substring(0, 100);
+        if (s.length() > 100) s = msg.substring(0, 255);
+
+        /* 替换转义字符 */
+        s = Get.SQLstr(s);
+
         try {
             /* 获取用户信息 */
             ResultSet rs = stmt.executeQuery("SELECT LAST_MSG,`REPEAT` FROM TOP WHERE ID=" + ID + ";");

@@ -58,4 +58,15 @@ public class Get {
         }
         return null;
     }
+
+    public static String SQLstr(String src) {
+        return src.replace("\n", "\\n")
+                .replace("_", "\\_")
+                .replace("%", "\\%")
+                .replace("'", "\\'")
+                .replace("\"", "\\\"")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t")
+                .replace("\r\n", "\\n");
+    }
 }

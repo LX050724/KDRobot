@@ -1,6 +1,5 @@
 package com.company.KDRobot;
 
-
 import cc.moecraft.icq.event.EventHandler;
 import cc.moecraft.icq.event.IcqListener;
 import cc.moecraft.icq.event.events.message.EventGroupMessage;
@@ -10,11 +9,8 @@ import cc.moecraft.icq.event.events.notice.groupmember.increase.EventNoticeGroup
 import cc.moecraft.icq.sender.IcqHttpApi;
 import cc.moecraft.icq.sender.message.MessageBuilder;
 import cc.moecraft.icq.sender.message.components.ComponentAt;
-import cc.moecraft.icq.sender.returndata.ReturnData;
-import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.logger.HyLogger;
 import com.company.KDRobot.function.*;
-import com.company.KDRobot.function.Adblock.Adblock;
 import com.company.KDRobot.function.MessageBord.MessageBord;
 import com.company.KDRobot.function.Top.Top;
 import com.company.KDRobot.function.sc.SuperCommand;
@@ -22,7 +18,6 @@ import com.company.KDRobot.function.sc.SuperCommand;
 import java.sql.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 
 public class KDRobot extends IcqListener {
     private Long GroupID;
@@ -64,7 +59,7 @@ public class KDRobot extends IcqListener {
         this.GroupID = cfg.GroupID;
         turingAPI = new TuringAPI("f4f88216f44c4fbc84f3ae03cc355300");
         Msg = new MessageBord(stmt, this.Admin, logger);
-        sc = new SuperCommand(stmt, this.Admin);
+        sc = new SuperCommand(stmt, GroupID, this.Admin);
         top = new Top(stmt, this.Admin, logger);
         cdTimer = new CDTimer(logger);
 //        adblock = new Adblock(PATH, logger);
@@ -171,7 +166,7 @@ public class KDRobot extends IcqListener {
                     case "t":
                         if (cdTimer.CD("Turling")) {
                             String m = event.getMessage();
-                            m =  m.substring(m.indexOf("t", m.indexOf("bot") + 4) + 2);
+                            m = m.substring(m.indexOf("t", m.indexOf("bot") + 4) + 2);
                             String r = turingAPI.machine(m);
                             logger.log(String.format("接到%d的图灵消息:'%s',回复:'%s'", event.getSenderId(), m, r));
                             event.respond(r);
@@ -203,6 +198,9 @@ public class KDRobot extends IcqListener {
                                 "about:相关信息\n" +
                                 "baike:查询百度百科(CD10分钟)\n" +
                                 "help:显示此帮助");
+                        break;
+                    case "verify":
+                        sc.verify(event, cmd);
                         break;
                     default:
                         event.respond("命令错误\n输入'bot help'查询帮助");

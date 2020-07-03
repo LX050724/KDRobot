@@ -4,20 +4,27 @@ import cc.moecraft.icq.event.events.message.EventGroupMessage;
 import cc.moecraft.icq.event.events.notice.groupmember.increase.EventNoticeGroupMemberIncrease;
 import cc.moecraft.icq.sender.IcqHttpApi;
 import cc.moecraft.icq.sender.message.MessageBuilder;
+import cc.moecraft.icq.sender.message.components.ComponentAt;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import com.company.KDRobot.function.Get;
+import com.company.KDRobot.function.TimeOutTimer.TimeOutCallBack;
+import com.company.KDRobot.function.TimeOutTimer.TimeOutTimer;
 
 import java.sql.Statement;
 import java.util.List;
 import java.util.Vector;
 
-public class SuperCommand {
+public class SuperCommand implements TimeOutCallBack {
     private BlackListDataBase db;
     private Long Admin;
+    private Long GroupID;
+    private TimeOutTimer timeOutTimer;
 
-    public SuperCommand(Statement stmt, Long Admin) {
+    public SuperCommand(Statement stmt, Long Group, Long Admin) {
+        timeOutTimer = new TimeOutTimer();
         db = new BlackListDataBase(stmt);
         this.Admin = Admin;
+        this.GroupID = Group;
     }
 
     private void peocess_bl(EventGroupMessage event, String[] cmd) {
@@ -55,19 +62,20 @@ public class SuperCommand {
                 IcqHttpApi api = event.getHttpApi();
                 Long ID = db.AddBlackList(cmd[2]);
                 Long Group = event.getGroupId();
-                String str;
+                MessageBuilder builder = new MessageBuilder();
                 if (ID != null) {
-                    str = ID.toString() + "成功添加至黑名单";
-                    if(cmd.length >= 4 && cmd[3].equals("on")) {
+                    builder.add(ID).add(" 成功添加至黑名单");
+                    if (cmd.length >= 4 && cmd[3].equals("up")) {
                         Long OPT = db.GetOPT(ID);
                         if (OPT != null) {
                             if (!Get.permissions(api, Group, OPT, Admin)) {
-                                str += "，邀请者 " + Get.ID2Name(api, Group, OPT);
+                                builder.add("，邀请者 ").add(new ComponentAt(OPT)).add(" 请在60分钟内发送'bot verify <你的QQ号>'验证身份");
+                                timeOutTimer.Add(OPT.toString(), 3600, api, this);
                             }
-                        } else str += "，未查询到邀请者";
+                        } else builder.add("，未查询到邀请者");
                     }
-                } else str = "添加失败,有可能是已经添加过或拼写错误";
-                event.respond(str);
+                } else builder.add("添加失败,有可能是已经添加过或拼写错误");
+                event.respond(builder.toString());
                 api.setGroupKick(event.getGroupId(), ID);
             }
         }
@@ -139,5 +147,19 @@ public class SuperCommand {
 
     public boolean Addbl(Long ID) {
         return db.AddBlackList(ID) != null;
+    }
+
+    public void verify(EventGroupMessage event, String[] cmd) {
+        Long Sender = event.getSenderId();
+        if (cmd[2].equals(Sender.toString()) && timeOutTimer.delete(cmd[2]))
+            event.respond("验证成功");
+    }
+
+    @Override
+    public void timeout(String Key, IcqHttpApi api) {
+        Long ID = Get.At2Long(Key);
+        Addbl(ID);
+        api.setGroupKick(GroupID, ID);
+        api.sendGroupMsg(GroupID, Key + "验证超时，添加BlackList踢出!");
     }
 }

@@ -52,13 +52,23 @@ public class SuperCommand {
                 break;
             }
             default: {
+                IcqHttpApi api = event.getHttpApi();
                 Long ID = db.AddBlackList(cmd[2]);
+                Long Group = event.getGroupId();
+                String str;
                 if (ID != null) {
-                    event.respond(ID + "成功添加至黑名单");
-                    event.getHttpApi().setGroupKick(event.getGroupId(), ID);
-                } else {
-                    event.respond("添加失败,有可能是已经添加过或拼写错误");
-                }
+                    str = ID.toString() + "成功添加至黑名单";
+                    if(cmd.length >= 4 && cmd[3].equals("on")) {
+                        Long OPT = db.GetOPT(ID);
+                        if (OPT != null) {
+                            if (!Get.permissions(api, Group, OPT, Admin)) {
+                                str += "，邀请者 " + Get.ID2Name(api, Group, OPT);
+                            }
+                        } else str += "，未查询到邀请者";
+                    }
+                } else str = "添加失败,有可能是已经添加过或拼写错误";
+                event.respond(str);
+                api.setGroupKick(event.getGroupId(), ID);
             }
         }
     }

@@ -14,6 +14,7 @@ import cc.moecraft.icq.sender.returndata.ReturnData;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.logger.HyLogger;
 import com.company.KDRobot.function.*;
+import com.company.KDRobot.function.Adblock.Adblock;
 import com.company.KDRobot.function.MessageBord.MessageBord;
 import com.company.KDRobot.function.Top.Top;
 import com.company.KDRobot.function.sc.SuperCommand;
@@ -80,11 +81,7 @@ public class KDRobot extends IcqListener {
     @EventHandler
     public void onEGEvent(EventGroupMessage event) {
         if (event.getGroupId().equals(GroupID)) {
-            IcqHttpApi api = event.getHttpApi();
-            ReturnData<RGroupMemberInfo> info = api.getGroupMemberInfo(event.getGroupId(), event.getSenderId());
-            boolean permissions = info.getData().getRole().equals("owner") ||
-                    info.getData().getRole().equals("admin") ||
-                    (Admin != null && event.getSenderId().equals(Admin));
+            boolean permissions = Get.permissions(event.getHttpApi(), event.getGroupId(), event.getSenderId(), Admin);
 
             /* top统计以及刷屏禁言 */
             top.getMsg(event, permissions);
@@ -223,6 +220,7 @@ public class KDRobot extends IcqListener {
     public void onENGMIEvent(EventNoticeGroupMemberIncrease event) {
         if (event.getGroupId().equals(GroupID)) {
             Long UserID = event.getUserId();
+            top.AddMember(UserID, event.getOperatorId());
             if (sc.chick(event, UserID) && cdTimer.CD("New"))
                 event.getHttpApi().sendGroupMsg(event.getGroupId(), new MessageBuilder()
                         .add(new ComponentAt(UserID))

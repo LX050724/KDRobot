@@ -61,18 +61,33 @@ public class TopDataBase {
                     "LAST_MSG_TIME TIMESTAMP null," +
                     "`KILL` SMALLINT UNSIGNED default 0 not null," +
                     "TICKET SMALLINT UNSIGNED default 1 not null," +
+                    "OPT BIGINT UNSIGNED NULL," +
                     "INDEX TOP_ALL_index(`ALL`)," +
                     "INDEX TOP_ID_index(ID)," +
                     "INDEX TOP_TODAY_index(TODAY)," +
                     "CONSTRAINT TOP_pk PRIMARY KEY (ID));");
             /* 添加用于记录保存时间的0号 */
-            stmt.execute("REPLACE INTO TOP VALUES (0, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
+            stmt.execute("REPLACE INTO TOP VALUES (0, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT, DEFAULT);");
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
         }
         refreshTimer = new RefreshTimer(stmt);
         refreshTimer.Start();
+    }
+
+    public void AddMember(Long ID, Long OperatorID) {
+        try {
+            PreparedStatement ptmt = stmt.getConnection().prepareStatement(
+                    "INSERT INTO TOP VALUES (?, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT, ?) " +
+                            "ON DUPLICATE KEY UPDATE OPT = ?;");
+            ptmt.setLong(1, ID);
+            ptmt.setLong(2, OperatorID);
+            ptmt.setLong(3, OperatorID);
+            ptmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public Boolean Add(Long ID, String msg, boolean permissions) {

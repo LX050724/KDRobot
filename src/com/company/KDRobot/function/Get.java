@@ -1,6 +1,7 @@
 package com.company.KDRobot.function;
 
 import cc.moecraft.icq.sender.IcqHttpApi;
+import cc.moecraft.icq.sender.returndata.ReturnData;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.utils.StringUtils;
 
@@ -57,5 +58,13 @@ public class Get {
             return Long.parseLong(str);
         }
         return null;
+    }
+
+    public static boolean permissions(IcqHttpApi api, Long GroupId, Long ID, Long Admin) {
+        ReturnData<RGroupMemberInfo> info = api.getGroupMemberInfo(GroupId, ID);
+        if (Admin == null)
+            return info.getData().getRole().equals("owner") || info.getData().getRole().equals("admin") || ID.equals(Admin);
+        else
+            return info.getData().getRole().equals("owner") || info.getData().getRole().equals("admin");
     }
 }

@@ -4,61 +4,24 @@ import cc.moecraft.icq.event.events.message.EventGroupMessage;
 import cc.moecraft.icq.sender.IcqHttpApi;
 import cc.moecraft.icq.sender.message.MessageBuilder;
 import cc.moecraft.icq.sender.message.components.ComponentAt;
-import cc.moecraft.icq.sender.returndata.ReturnData;
-import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.logger.HyLogger;
 import com.company.KDRobot.function.CDTimer;
 import com.company.KDRobot.function.Get;
+import com.company.KDRobot.function.TimeOutTimer.TimeOutCallBack;
+import com.company.KDRobot.function.TimeOutTimer.TimeOutTimer;
 
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.Vector;
 
-public class MessageBord {
-
-    private static class TimeOut extends TimerTask {
-        private Timer timer;
-        private MessageBord p;
-        private int time;
-        private boolean running;
-        private IcqHttpApi api;
-        private Long GroupID;
-
-        public TimeOut(MessageBord Parent) {
-            p = Parent;
-            running = false;
-            timer = new Timer();
-            timer.schedule(this, 1000, 1000);
-        }
-
-        public void start(int time, Long GroupID, IcqHttpApi api) {
-            this.api = api;
-            this.GroupID = GroupID;
-            this.time = time;
-            running = true;
-        }
-
-        public void stop() {
-            running = false;
-        }
-
-        @Override
-        public void run() {
-            if (time > 0) time--;
-            if (time == 0 && running) {
-                p.timeout(api, GroupID);
-                running = false;
-            }
-        }
-    }
+public class MessageBord implements TimeOutCallBack {
 
     private MessageBordDataBase db;
     private CDTimer timer;
-    private TimeOut timeOut;
+    private TimeOutTimer timeOut;
     private Long Admin;
+    private Long GroupID;
 
     private MessageBordDataBase.Message tmpmsg;
 
@@ -67,7 +30,7 @@ public class MessageBord {
         this.Admin = Admin;
         db = new MessageBordDataBase(stmt);
         timer = new CDTimer(logger);
-        timeOut = new TimeOut(this);
+        timeOut = new TimeOutTimer();
         timer.AddCD("ls", 60L);
         timer.AddCD("look", 60L);
         timer.AddCD("push", 600L);
@@ -171,11 +134,7 @@ public class MessageBord {
         if (ID != null) {
             MessageBordDataBase.Message msg = db.find(ID.intValue());
             if (msg != null) {
-                IcqHttpApi api = event.getHttpApi();
-                ReturnData<RGroupMemberInfo> info = api.getGroupMemberInfo(event.getGroupId(), event.getSenderId());
-                boolean permissions = info.getData().getRole().equals("owner") ||
-                        info.getData().getRole().equals("admin") ||
-                        (Admin != null && Admin.equals(event.getSenderId()));
+                boolean permissions = Get.permissions(event.getHttpApi(), event.getGroupId(), event.getSenderId(), Admin);
                 if (permissions || msg.userID.equals(event.getSenderId())) {
                     if (db.deleteMsg(ID.intValue())) event.respond("成功删除");
                     else event.respond("错误");
@@ -199,7 +158,8 @@ public class MessageBord {
                     .add(new ComponentAt(event.getSenderId()))
                     .add(" 请在5分钟以内再次使用该命令输入正文,截断长度100字")
                     .toString());
-            timeOut.start(300, event.getGroupId(), event.getHttpApi());
+            GroupID = event.getGroupId();
+            timeOut.Add(event.getSenderId().toString(), 300, event.getHttpApi(), this);
         } else if (tmpmsg.userID.equals(event.getSenderId())) {
             tmpmsg.body = event.getMessage().substring(event.getMessage().indexOf("push") + 5);
             if (tmpmsg.title.length() > 100)
@@ -207,14 +167,15 @@ public class MessageBord {
             Long ID = db.pushMsg(tmpmsg);
             if (ID == null) event.respond("错误");
             else event.respond("发帖成功,帖子ID:" + ID);
-            timeOut.stop();
+            timeOut.delete(event.getSenderId().toString());
             tmpmsg = null;
         }
     }
 
-    private void timeout(IcqHttpApi api, Long groupID) {
+    @Override
+    public void timeout(String Key, IcqHttpApi api) {
         if (tmpmsg != null) {
-            api.sendGroupMsg(groupID, new MessageBuilder()
+            api.sendGroupMsg(GroupID, new MessageBuilder()
                     .add(new ComponentAt(tmpmsg.userID))
                     .add("发帖超时已经取消")
                     .toString());

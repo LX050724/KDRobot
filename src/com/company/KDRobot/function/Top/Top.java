@@ -38,6 +38,10 @@ public class Top {
         }
     }
 
+    public void AddMember(Long ID, Long OperatorID) {
+        db.AddMember(ID, OperatorID);
+    }
+
     private String getTopTable(EventGroupMessage event, ArrayList<Pair<Long, Long>> list) {
         IcqHttpApi api = event.getHttpApi();
         StringBuilder stringBuilder = new StringBuilder();
@@ -138,9 +142,7 @@ public class Top {
     }
 
     public void process(EventGroupMessage event, String[] cmd) {
-        IcqHttpApi api = event.getHttpApi();
-        ReturnData<RGroupMemberInfo> info = api.getGroupMemberInfo(event.getGroupId(), event.getSenderId());
-        boolean permissions = info.getData().getRole().equals("owner") || info.getData().getRole().equals("admin");
+        boolean permissions = Get.permissions(event.getHttpApi(), event.getGroupId(), event.getSenderId(), Admin);
 
         if (cmd.length < 3) {
             if (permissions || cdTimer.CD("top"))

@@ -91,6 +91,18 @@ public class BlackListDataBase {
         return str.toString();
     }
 
+    public Long GetOPT(Long ID) {
+        try {
+            ResultSet rs = stmt.executeQuery("SELECT OPT FROM TOP WHERE ID=" + ID + ';');
+            if (rs.next()) {
+                return rs.getLong(1);
+            } else return null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean CheckOne(String ID) {
         try {
             ResultSet rs = stmt.executeQuery("SELECT * FROM BLACKLIST WHERE ID=" + ID + ';');

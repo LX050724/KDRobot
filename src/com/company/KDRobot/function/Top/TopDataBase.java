@@ -52,30 +52,21 @@ public class TopDataBase {
         this.stmt = stmt;
         try {
             /* 检查TOP表是否存在 */
-            try {
-                stmt.executeQuery("select * from TOP;");
-            } catch (SQLSyntaxErrorException e) {
-                if (e.getErrorCode() == 1146) {
-                    System.out.println("TOP表不存在不存在，创建");
-                    stmt.execute("create table TOP(" +
-                            "ID BIGINT UNSIGNED default 0 not null," +
-                            "TODAY BIGINT UNSIGNED default 0 not null," +
-                            "`ALL` BIGINT UNSIGNED default 0 not null," +
-                            "LAST_MSG VARCHAR(255) null," +
-                            "`REPEAT` TINYINT UNSIGNED NULL," +
-                            "LAST_MSG_TIME TIMESTAMP null," +
-                            "`KILL` SMALLINT UNSIGNED default 0 not null," +
-                            "TICKET SMALLINT UNSIGNED default 1 not null," +
-                            "CONSTRAINT TOP_pk PRIMARY KEY (ID));");
-                    stmt.execute("create index TOP_ALL_index on TOP (`ALL`);");
-                    stmt.execute("create index TOP_ID_index on TOP (ID);");
-                    stmt.execute("create index TOP_TODAY_index on TOP (TODAY);");
-                    /* 添加用于记录保存时间的0号 */
-                    stmt.execute("INSERT INTO TOP VALUES (0, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
-                } else {
-                    e.printStackTrace();
-                }
-            }
+            stmt.execute("create table if not exists  TOP(" +
+                    "ID BIGINT UNSIGNED default 0 not null," +
+                    "TODAY BIGINT UNSIGNED default 0 not null," +
+                    "`ALL` BIGINT UNSIGNED default 0 not null," +
+                    "LAST_MSG VARCHAR(255) null," +
+                    "`REPEAT` TINYINT UNSIGNED NULL," +
+                    "LAST_MSG_TIME TIMESTAMP null," +
+                    "`KILL` SMALLINT UNSIGNED default 0 not null," +
+                    "TICKET SMALLINT UNSIGNED default 1 not null," +
+                    "INDEX TOP_ALL_index(`ALL`)," +
+                    "INDEX TOP_ID_index(ID)," +
+                    "INDEX TOP_TODAY_index(TODAY)," +
+                    "CONSTRAINT TOP_pk PRIMARY KEY (ID));");
+            /* 添加用于记录保存时间的0号 */
+            stmt.execute("REPLACE INTO TOP VALUES (0, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
@@ -91,18 +82,15 @@ public class TopDataBase {
         /* 截断长度100 */
         if (s.length() > 100) s = msg.substring(0, 255);
 
-        /* 替换转义字符 */
-        s = Get.SQLstr(s);
-
         try {
             /* 获取用户信息 */
-            ResultSet rs = stmt.executeQuery("SELECT LAST_MSG,`REPEAT` FROM TOP WHERE ID=" + ID + ";");
-
+            PreparedStatement ptmt = stmt.getConnection().prepareStatement(
+                    "SELECT LAST_MSG,`REPEAT` FROM TOP WHERE ID=?;");
+            ptmt.setLong(1, ID);
+            ResultSet rs = ptmt.executeQuery();
+            int repeat = 0;
             /* 获取到信息 */
             if (rs.next()) {
-                /* 设置重复次数 */
-                String c = "0";
-
                 /* 不是管理 */
                 if (!permissions) {
                     /* 获取上次发言内容 */
@@ -110,23 +98,29 @@ public class TopDataBase {
 
                     /* 如果重复加1 */
                     if (lastmsg != null && lastmsg.equals(s)) {
-                        c = "`REPEAT`+1";
-
                         /* 重复超上限禁言 */
-                        if (rs.getInt(2) + 1 >= 5) ban = true;
+                        repeat = rs.getInt(2) + 1;
+                        ban = repeat >= 5;
                     }
                 }
-
                 /* 更新数据库 */
-                stmt.execute("UPDATE TOP " +
+                ptmt = stmt.getConnection().prepareStatement("UPDATE TOP " +
                         "SET TODAY=TODAY + 1,`ALL`=`ALL` + 1," +
-                        "LAST_MSG='" + s + "'," +
-                        "`REPEAT`=" + c + ',' +
+                        "LAST_MSG=?," +
+                        "`REPEAT`= ?," +
                         "LAST_MSG_TIME=CURRENT_TIMESTAMP() " +
-                        "WHERE ID=" + ID + ";");
+                        "WHERE ID=?;");
+                ptmt.setString(1, s);
+                ptmt.setInt(2, repeat);
+                ptmt.setLong(3, ID);
+                ptmt.execute();
             } else {
                 /* 没获取到插入数据 */
-                stmt.execute("INSERT INTO TOP VALUES (" + ID + ", 1, 1, '" + s + "', 0, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
+                ptmt = stmt.getConnection().prepareStatement(
+                        "INSERT INTO TOP VALUES (?, 1, 1, ?, 0, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
+                ptmt.setLong(1, ID);
+                ptmt.setString(2, s);
+                ptmt.execute();
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -31,24 +31,15 @@ public class MessageBordDataBase {
         this.stmt = stmt;
         try {
             /* 检查MSGBORD表是否存在 */
-            try {
-                stmt.execute("select ID from MSGBORD;");
-            } catch (SQLSyntaxErrorException e) {
-                if (e.getErrorCode() == 1146) {
-                    System.out.println("MAGBORD表不存在不存在，创建");
-                    stmt.execute("CREATE TABLE MSGBORD(\n" +
-                            "ID INT NOT NULL AUTO_INCREMENT," +
-                            "USERID INT NOT NULL," +
-                            "TITLE VARCHAR(20) NOT NULL," +
-                            "MSG VARCHAR(100) NOT NULL," +
-                            "TIME TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-                            "CONSTRAINT MSGBORD_pk PRIMARY KEY (ID));");
-                    stmt.execute("CREATE INDEX MSGBORD_ID_index ON MSGBORD (ID);");
-                    stmt.execute("CREATE INDEX MSGBORD_USERID_index ON MSGBORD (USERID);");
-                } else {
-                    e.printStackTrace();
-                }
-            }
+            stmt.execute("CREATE TABLE if not exists MSGBORD(" +
+                    "ID INT NOT NULL AUTO_INCREMENT," +
+                    "USERID INT NOT NULL," +
+                    "TITLE VARCHAR(20) NOT NULL," +
+                    "MSG VARCHAR(100) NOT NULL," +
+                    "TIME TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "INDEX MSGBORD_pk(ID)," +
+                    "INDEX MSGBORD_USERID_index(USERID)," +
+                    "CONSTRAINT MSGBORD_pk PRIMARY KEY (ID));");
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
@@ -77,17 +68,19 @@ public class MessageBordDataBase {
     }
 
     public Long pushMsg(Message msg) {
-        /* 替换转义字符 */
-        String title = Get.SQLstr(msg.title);
-        String body = Get.SQLstr(msg.body);
-
         try {
-            stmt.execute(String.format(
-                    "INSERT INTO MSGBORD (USERID, TITLE, MSG, TIME) VALUES (%d, '%s', '%s', DEFAULT);",
-                    msg.userID, title, body));
-            ResultSet rs = stmt.executeQuery(String.format(
-                    "SELECT ID FROM MSGBORD WHERE USERID='%d' AND TITLE='%S' AND MSG='%S';",
-                    msg.userID, title, body));
+            PreparedStatement ptmt = stmt.getConnection().prepareStatement(
+                    "INSERT INTO MSGBORD (USERID, TITLE, MSG, TIME) VALUES (?, ?, ?, DEFAULT);");
+            ptmt.setLong(1, msg.userID);
+            ptmt.setString(2, msg.title);
+            ptmt.setString(3, msg.body);
+
+            ptmt = stmt.getConnection().prepareStatement(
+                    "SELECT ID FROM MSGBORD WHERE USERID=? AND TITLE=? AND MSG=?;");
+            ptmt.setLong(1, msg.userID);
+            ptmt.setString(2, msg.title);
+            ptmt.setString(3, msg.body);
+            ResultSet rs = ptmt.executeQuery();
             if (rs.next()) {
                 return rs.getLong(1);
             } else return null;

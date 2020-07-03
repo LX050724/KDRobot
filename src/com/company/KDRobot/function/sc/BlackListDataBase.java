@@ -12,24 +12,17 @@ public class BlackListDataBase {
     public BlackListDataBase(Statement stmt) {
         this.stmt = stmt;
         try {
-            /* 检查TOP表是否存在 */
-            try {
-                stmt.executeQuery("select ID from BLACKLIST;");
-            } catch (SQLSyntaxErrorException e) {
-                if (e.getErrorCode() == 1146) {
-                    System.out.println("BLACKLIST表不存在不存在，创建");
-                    stmt.execute("create table BLACKLIST(ID BIGINT UNSIGNED NOT NULL," +
-                            "ADDTIME TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-                            "CONSTRAINT BLACKLIST_pk PRIMARY KEY (ID));");
-                    stmt.execute("create index BLACKLIST_ID_index on BLACKLIST (ID);");
-                } else {
-                    e.printStackTrace();
-                }
-            }
-        } catch (Exception e) {
+            /* 检查BLACKLIST表是否存在 */
+            stmt.execute("create table if not exists BLACKLIST(ID BIGINT UNSIGNED NOT NULL," +
+                    "ADDTIME TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "INDEX BLACKLIST_ID_index(ID)," +
+                    "CONSTRAINT BLACKLIST_pk PRIMARY KEY (ID));");
+        } catch (
+                Exception e) {
             e.printStackTrace();
             System.exit(-1);
         }
+
     }
 
     public String RemoveBlackList(String ID) {

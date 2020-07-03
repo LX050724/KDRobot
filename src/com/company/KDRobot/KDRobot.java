@@ -41,15 +41,7 @@ public class KDRobot extends IcqListener {
         try {
             Connection conn = DriverManager.getConnection(cfg.dataBaseCfg.URL, cfg.dataBaseCfg.NAME, cfg.dataBaseCfg.PASSWORD);
             stmt = conn.createStatement();
-            try {
-                stmt.execute("USE Group" + cfg.dataBaseCfg.Group);
-            } catch (SQLSyntaxErrorException e) {
-                System.out.println(e.getErrorCode());
-                if (e.getErrorCode() == 1049) {
-                    logger.log("数据库'Group" + cfg.dataBaseCfg.Group + "'不存在，创建");
-                    stmt.execute("CREATE DATABASE Group" + cfg.dataBaseCfg.Group + ';');
-                }
-            }
+            stmt.execute("create database if not exists Group" + cfg.dataBaseCfg.Group + ';');
             stmt.close();
             conn.close();
             /* 设置到特定库的URL */

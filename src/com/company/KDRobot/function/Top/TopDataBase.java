@@ -1,6 +1,5 @@
 package com.company.KDRobot.function.Top;
 
-import com.company.KDRobot.function.Get;
 import javafx.util.Pair;
 
 import java.sql.*;
@@ -99,10 +98,10 @@ public class TopDataBase {
 
         try {
             /* 获取用户信息 */
-            PreparedStatement ptmt = stmt.getConnection().prepareStatement(
+            PreparedStatement ptmt1 = stmt.getConnection().prepareStatement(
                     "SELECT LAST_MSG,`REPEAT` FROM TOP WHERE ID=?;");
-            ptmt.setLong(1, ID);
-            ResultSet rs = ptmt.executeQuery();
+            ptmt1.setLong(1, ID);
+            ResultSet rs = ptmt1.executeQuery();
             int repeat = 0;
             /* 获取到信息 */
             if (rs.next()) {
@@ -119,23 +118,24 @@ public class TopDataBase {
                     }
                 }
                 /* 更新数据库 */
-                ptmt = stmt.getConnection().prepareStatement("UPDATE TOP " +
+                PreparedStatement ptmt2 = stmt.getConnection().prepareStatement("UPDATE TOP " +
                         "SET TODAY=TODAY + 1,`ALL`=`ALL` + 1," +
                         "LAST_MSG=?," +
                         "`REPEAT`= ?," +
                         "LAST_MSG_TIME=CURRENT_TIMESTAMP() " +
                         "WHERE ID=?;");
-                ptmt.setString(1, s);
-                ptmt.setInt(2, repeat);
-                ptmt.setLong(3, ID);
-                ptmt.execute();
+                ptmt2.setString(1, s);
+                ptmt2.setInt(2, repeat);
+                ptmt2.setLong(3, ID);
+                ptmt2.execute();
             } else {
                 /* 没获取到插入数据 */
-                ptmt = stmt.getConnection().prepareStatement(
-                        "INSERT INTO TOP VALUES (?, 1, 1, ?, 0, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
-                ptmt.setLong(1, ID);
-                ptmt.setString(2, s);
-                ptmt.execute();
+                PreparedStatement ptmt3 = stmt.getConnection().prepareStatement(
+                        "INSERT INTO TOP (ID, TODAY, `ALL`, LAST_MSG, REPEAT, LAST_MSG_TIME) " +
+                        "VALUES  (?, 1, 1, ?, 0, CURRENT_TIMESTAMP());");
+                ptmt3.setLong(1, ID);
+                ptmt3.setString(2, s);
+                ptmt3.execute();
             }
         } catch (Exception e) {
             e.printStackTrace();

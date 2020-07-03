@@ -3,20 +3,19 @@ package com.company.KDRobot.function;
 import cc.moecraft.logger.HyLogger;
 import javafx.util.Pair;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 
 public class CDTimer extends TimerTask {
     private Timer timer;
     private HyLogger logger;
 
-    private HashMap<String, Pair<Long, Long>> CDList;
+    private TreeMap<String, Pair<Long, Long>> CDList;
 
     public CDTimer(HyLogger logger) {
         this.logger = logger;
-        CDList = new HashMap<>();
+        CDList = new TreeMap<>();
         timer = new Timer();
         timer.schedule(this, 1000, 1000);
     }
@@ -41,11 +40,12 @@ public class CDTimer extends TimerTask {
 
     @Override
     public void run() {
-        Map<String, Pair<Long, Long>> map = CDList;
-        for (Map.Entry<String, Pair<Long, Long>> entry : map.entrySet()) {
-            Long time = entry.getValue().getValue();
-            if (time > 0) time--;
-            CDList.replace(entry.getKey(), new Pair<>(entry.getValue().getKey(), time));
-        }
+        CDList.forEach((Key, pair) -> {
+            Long time = pair.getValue();
+            if (time > 0) {
+                time--;
+                CDList.replace(Key, new Pair<>(pair.getKey(), time));
+            }
+        });
     }
 }

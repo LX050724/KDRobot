@@ -131,8 +131,7 @@ public class TopDataBase {
             } else {
                 /* 没获取到插入数据 */
                 PreparedStatement ptmt3 = stmt.getConnection().prepareStatement(
-                        "INSERT INTO TOP (ID, TODAY, `ALL`, LAST_MSG, REPEAT, LAST_MSG_TIME) " +
-                        "VALUES  (?, 1, 1, ?, 0, CURRENT_TIMESTAMP());");
+                        "INSERT INTO TOP VALUES (?, 0, 0, ?, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT, DEFAULT);");
                 ptmt3.setLong(1, ID);
                 ptmt3.setString(2, s);
                 ptmt3.execute();

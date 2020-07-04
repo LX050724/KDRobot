@@ -63,9 +63,14 @@
 >
 >`sc bl rm <ID>`将ID移除黑名单,ID可以是直接@某人或某人的QQ号
 >
+>`sc bl verify <ID>` 手动验证ID的身份。
+>
+>`sc bl celverify <ID>`取消ID的验证
+>
 >`sc shutup <ID> <time>`禁言某人time时间,时间格式同`quiet`格式
 >
 >`sc sql <direction> <cmd>`直接操作数据库，direction操作方向：'w'写数据库，'r'读数据库，cmd：MySQL命令。
+>
 
 >## 其他功能
 >

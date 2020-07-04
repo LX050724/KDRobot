@@ -10,6 +10,7 @@ import com.company.KDRobot.function.Get;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutCallBack;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutTimer;
 
+import java.security.acl.Group;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Vector;
@@ -29,6 +30,7 @@ public class SuperCommand implements TimeOutCallBack {
 
     private void peocess_bl(EventGroupMessage event, String[] cmd) {
         if (cmd.length < 3) return;
+        IcqHttpApi api = event.getHttpApi();
         switch (cmd[2]) {
             case "ls": {
                 event.respond(db.StringBlackList());
@@ -43,7 +45,6 @@ public class SuperCommand implements TimeOutCallBack {
             case "check": {
                 MessageBuilder msg = new MessageBuilder();
                 Long GroupID = event.getGroupId();
-                IcqHttpApi api = event.getHttpApi();
                 Vector<Long> Blcaklist = db.ListBlackList();
                 List<RGroupMemberInfo> GroupMemberList = api.getGroupMemberList(event.getGroupId()).data;
                 if (GroupMemberList != null && Blcaklist != null) {
@@ -58,15 +59,44 @@ public class SuperCommand implements TimeOutCallBack {
                 } else event.respond("错误");
                 break;
             }
+            case "verify": {
+                if (cmd.length < 4) break;
+                Long Id = Get.At2Long(cmd[3]);
+                if (Get.permissions(api, GroupID, Id, Admin)) {
+                    event.respond("对管理员无效");
+                    break;
+                }
+                if (Id != null) {
+                    if (timeOutTimer.Add(Id.toString(), 3600, api, this)) {
+                        MessageBuilder builder = new MessageBuilder();
+                        builder.add(new ComponentAt(Id)).add(" 请在60分钟内发送'bot verify <你的QQ号>'验证身份");
+                        event.respond(builder.toString());
+                    } else event.respond("验证列表添加异常，可能是已经添加过");
+                } else event.respond("输入有误");
+                break;
+            }
+            case "celverify": {
+                if (cmd.length < 4) break;
+                Long Id = Get.At2Long(cmd[3]);
+                if (Id != null) {
+                    if (timeOutTimer.delete(Id.toString())) {
+                        event.respond("取消成功");
+                    } else event.respond("取消失败，" + Get.ID2Name(api, GroupID, Id) + " 不在列表中");
+                } else event.respond("输入有误");
+                break;
+            }
             default: {
-                IcqHttpApi api = event.getHttpApi();
-                Long ID = db.AddBlackList(cmd[2]);
+                Long Id = db.AddBlackList(cmd[2]);
                 Long Group = event.getGroupId();
                 MessageBuilder builder = new MessageBuilder();
-                if (ID != null) {
-                    builder.add(ID).add(" 成功添加至黑名单");
+                if (Id != null) {
+                    if (Get.permissions(api, GroupID, Id, Admin)) {
+                        event.respond("对管理员无效");
+                        break;
+                    }
+                    builder.add(Id).add(" 成功添加至黑名单");
                     if (cmd.length >= 4 && cmd[3].equals("up")) {
-                        Long OPT = db.GetOPT(ID);
+                        Long OPT = db.GetOPT(Id);
                         if (OPT != null) {
                             if (!Get.permissions(api, Group, OPT, Admin)) {
                                 builder.add("，邀请者 ").add(new ComponentAt(OPT)).add(" 请在60分钟内发送'bot verify <你的QQ号>'验证身份");
@@ -76,7 +106,7 @@ public class SuperCommand implements TimeOutCallBack {
                     }
                 } else builder.add("添加失败,有可能是已经添加过或拼写错误");
                 event.respond(builder.toString());
-                api.setGroupKick(event.getGroupId(), ID);
+                api.setGroupKick(event.getGroupId(), Id);
             }
         }
     }
@@ -158,8 +188,12 @@ public class SuperCommand implements TimeOutCallBack {
     @Override
     public void timeout(String Key, IcqHttpApi api) {
         Long ID = Get.At2Long(Key);
-        Addbl(ID);
-        api.setGroupKick(GroupID, ID);
-        api.sendGroupMsg(GroupID, Key + "验证超时，添加BlackList踢出!");
+        if (Addbl(ID)) {
+            api.setGroupKick(GroupID, ID);
+            api.sendGroupMsg(GroupID, Key + "验证超时，添加BlackList踢出!");
+        } else {
+            api.setGroupKick(GroupID, ID);
+            api.sendGroupMsg(GroupID, Key + "尝试踢出，但添加黑名单异常");
+        }
     }
 }

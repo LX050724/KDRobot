@@ -36,7 +36,7 @@ public class TopDataBase {
                     }
                     stmt.execute("UPDATE TOP SET LAST_MSG_TIME=CURRENT_TIMESTAMP() WHERE ID=0;");
                 } else {
-                    stmt.execute("INSERT INTO TOP VALUES (0, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT);");
+                    stmt.execute("INSERT INTO TOP VALUES (0, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT, NULL);");
                 }
             } catch (SQLException throwables) {
                 throwables.printStackTrace();
@@ -93,8 +93,8 @@ public class TopDataBase {
         String s = msg;
         boolean ban = false;
 
-        /* 截断长度100 */
-        if (s.length() > 100) s = msg.substring(0, 255);
+        /* 截断长度255 */
+        if (s.length() > 255) s = msg.substring(0, 255);
 
         try {
             /* 获取用户信息 */

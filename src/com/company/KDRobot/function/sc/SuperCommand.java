@@ -10,7 +10,6 @@ import com.company.KDRobot.function.Get;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutCallBack;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutTimer;
 
-import java.security.acl.Group;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Vector;
@@ -62,11 +61,11 @@ public class SuperCommand implements TimeOutCallBack {
             case "verify": {
                 if (cmd.length < 4) break;
                 Long Id = Get.At2Long(cmd[3]);
-                if (Get.permissions(api, GroupID, Id, Admin)) {
-                    event.respond("对管理员无效");
-                    break;
-                }
                 if (Id != null) {
+                    if (Get.permissions(api, GroupID, Id, Admin)) {
+                        event.respond("对管理员无效");
+                        break;
+                    }
                     if (timeOutTimer.Add(Id.toString(), 3600, api, this)) {
                         MessageBuilder builder = new MessageBuilder();
                         builder.add(new ComponentAt(Id)).add(" 请在60分钟内发送'bot verify <你的QQ号>'验证身份");
@@ -104,9 +103,9 @@ public class SuperCommand implements TimeOutCallBack {
                             }
                         } else builder.add("，未查询到邀请者");
                     }
+                    api.setGroupKick(event.getGroupId(), Id);
                 } else builder.add("添加失败,有可能是已经添加过或拼写错误");
                 event.respond(builder.toString());
-                api.setGroupKick(event.getGroupId(), Id);
             }
         }
     }

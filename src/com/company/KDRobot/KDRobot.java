@@ -215,6 +215,7 @@ public class KDRobot extends IcqListener {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + e.getMessage());
         }
     }
 
@@ -233,6 +234,7 @@ public class KDRobot extends IcqListener {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + e.getMessage());
         }
     }
 
@@ -246,6 +248,7 @@ public class KDRobot extends IcqListener {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + e.getMessage());
         }
     }
 
@@ -260,6 +263,7 @@ public class KDRobot extends IcqListener {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + e.getMessage());
         }
     }
 }

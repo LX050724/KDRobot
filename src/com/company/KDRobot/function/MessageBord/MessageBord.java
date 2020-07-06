@@ -5,7 +5,7 @@ import cc.moecraft.icq.sender.IcqHttpApi;
 import cc.moecraft.icq.sender.message.MessageBuilder;
 import cc.moecraft.icq.sender.message.components.ComponentAt;
 import cc.moecraft.logger.HyLogger;
-import com.company.KDRobot.function.CDTimer;
+import com.company.KDRobot.function.CDTimer.CDTimer;
 import com.company.KDRobot.function.Get;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutCallBack;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutTimer;
@@ -39,6 +39,7 @@ public class MessageBord implements TimeOutCallBack {
     }
 
     public void process(EventGroupMessage event, String[] cmd) {
+        if (cmd.length < 3) return;
         switch (cmd[2]) {
             case "ls":
                 if (timer.CD(cmd[2]))
@@ -156,14 +157,14 @@ public class MessageBord implements TimeOutCallBack {
                 tmpmsg.title = tmpmsg.title.substring(0, 20);
             event.respond(new MessageBuilder()
                     .add(new ComponentAt(event.getSenderId()))
-                    .add(" 请在5分钟以内再次使用该命令输入正文,截断长度100字")
+                    .add(" 请在5分钟以内再次使用该命令输入正文,截断长度255字")
                     .toString());
             GroupID = event.getGroupId();
             timeOut.Add(event.getSenderId().toString(), 300, event.getHttpApi(), this);
         } else if (tmpmsg.userID.equals(event.getSenderId())) {
             tmpmsg.body = event.getMessage().substring(event.getMessage().indexOf("push") + 5);
-            if (tmpmsg.title.length() > 100)
-                tmpmsg.body = tmpmsg.body.substring(0, 100);
+            if (tmpmsg.body.length() > 255)
+                tmpmsg.body = tmpmsg.body.substring(0, 255);
             Long ID = db.pushMsg(tmpmsg);
             if (ID == null) event.respond("错误");
             else event.respond("发帖成功,帖子ID:" + ID);

@@ -4,6 +4,8 @@ import cc.moecraft.icq.sender.IcqHttpApi;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.utils.StringUtils;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
@@ -66,5 +68,13 @@ public class Get {
             return Role.equals("owner") || Role.equals("admin");
         else
             return Role.equals("owner") || Role.equals("admin") || ID.equals(Admin);
+    }
+
+    public static String StackTrace(Throwable throwable) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        throwable.printStackTrace(pw);
+        pw.flush();
+        return sw.toString();
     }
 }

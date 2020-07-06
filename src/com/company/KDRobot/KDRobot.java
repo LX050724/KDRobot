@@ -11,6 +11,7 @@ import cc.moecraft.icq.sender.message.MessageBuilder;
 import cc.moecraft.icq.sender.message.components.ComponentAt;
 import cc.moecraft.logger.HyLogger;
 import com.company.KDRobot.function.*;
+import com.company.KDRobot.function.CDTimer.CDTimer;
 import com.company.KDRobot.function.MessageBord.MessageBord;
 import com.company.KDRobot.function.Top.Top;
 import com.company.KDRobot.function.sc.SuperCommand;
@@ -215,7 +216,7 @@ public class KDRobot extends IcqListener {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + e.getMessage());
+            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + Get.StackTrace(e));
         }
     }
 
@@ -234,7 +235,7 @@ public class KDRobot extends IcqListener {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + e.getMessage());
+            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + Get.StackTrace(e));
         }
     }
 
@@ -248,7 +249,7 @@ public class KDRobot extends IcqListener {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + e.getMessage());
+            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + Get.StackTrace(e));
         }
     }
 
@@ -263,7 +264,7 @@ public class KDRobot extends IcqListener {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + e.getMessage());
+            event.getHttpApi().sendGroupMsg(GroupID, "发生异常！\n" + Get.StackTrace(e));
         }
     }
 }

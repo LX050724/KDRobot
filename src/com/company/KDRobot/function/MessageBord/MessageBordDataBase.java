@@ -33,7 +33,7 @@ public class MessageBordDataBase {
                     "ID INT NOT NULL AUTO_INCREMENT," +
                     "USERID INT NOT NULL," +
                     "TITLE VARCHAR(20) NOT NULL," +
-                    "MSG VARCHAR(100) NOT NULL," +
+                    "MSG VARCHAR(255) NOT NULL," +
                     "TIME TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
                     "INDEX MSGBORD_pk(ID)," +
                     "INDEX MSGBORD_USERID_index(USERID)," +
@@ -67,7 +67,6 @@ public class MessageBordDataBase {
 
     public Long pushMsg(Message msg) {
         try {
-            System.out.println(msg);
             PreparedStatement ptmt = stmt.getConnection().prepareStatement(
                     "INSERT INTO MSGBORD (USERID, TITLE, MSG, TIME) VALUES (?, ?, ?, DEFAULT);");
             ptmt.setLong(1, msg.userID);

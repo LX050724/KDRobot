@@ -21,7 +21,7 @@ public class CDTimer {
 
     public Long GetLastTime(String name) {
         Node node = CDList.get(name);
-        return node.CD - (new Date().getTime() - node.time);
+        return (node.CD - (new Date().getTime() - node.time)) / 1000;
     }
 
     public boolean CD(String name) {

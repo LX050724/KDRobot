@@ -61,7 +61,7 @@ public class KDRobot extends IcqListener {
         turingAPI = new TuringAPI("f4f88216f44c4fbc84f3ae03cc355300");
         Msg = new MessageBord(stmt, this.Admin, logger);
         sc = new SuperCommand(stmt, GroupID, this.Admin);
-        top = new Top(stmt, this.Admin, logger);
+        top = new Top(stmt, GroupID, this.Admin, logger);
         cdTimer = new CDTimer(logger);
 //        adblock = new Adblock(PATH, logger);
         cdTimer.AddCD("Turling", 10L);
@@ -168,7 +168,7 @@ public class KDRobot extends IcqListener {
                         case "t":
                             if (cdTimer.CD("Turling")) {
                                 String m = event.getMessage();
-                                m = m.substring(m.indexOf("t", m.indexOf("bot") + 4) + 2);
+                                m = m.substring(3).trim().substring(1).trim();
                                 String r = turingAPI.machine(m);
                                 logger.log(String.format("接到%d的图灵消息:'%s',回复:'%s'", event.getSenderId(), m, r));
                                 event.respond(r);

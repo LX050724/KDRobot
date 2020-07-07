@@ -150,7 +150,7 @@ public class BlackListDataBase {
                 return str.toString();
             }
         } catch (SQLException e) {
-            return "Error ID=" + e.getErrorCode() + '\n' + e.getMessage();
+            return "Error Code=" + e.getErrorCode() + '\n' + e.getMessage();
         }
     }
 }

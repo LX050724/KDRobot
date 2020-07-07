@@ -62,7 +62,9 @@ public class Get {
     }
 
     public static boolean permissions(IcqHttpApi api, Long GroupId, Long ID, Long Admin) {
-        String Role = api.getGroupMemberInfo(GroupId, ID).getData().getRole();
+        RGroupMemberInfo memberInfo = api.getGroupMemberInfo(GroupId, ID).getData();
+        if (memberInfo == null) return false;
+        String Role = memberInfo.getRole();
 
         if (Admin == null)
             return Role.equals("owner") || Role.equals("admin");

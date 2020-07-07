@@ -16,9 +16,12 @@ public class Top {
     private TopDataBase db;
     private CDTimer cdTimer;
     private Long Admin;
+    private Long GroupID;
 
-    public Top(Statement stmt, Long Admin, HyLogger logger) {
+
+    public Top(Statement stmt, Long Group, Long Admin, HyLogger logger) {
         this.Admin = Admin;
+        this.GroupID = Group;
         db = new TopDataBase(stmt);
         cdTimer = new CDTimer(logger);
         cdTimer.AddCD("top", 300L);
@@ -108,14 +111,14 @@ public class Top {
             return;
         }
 
-        ReturnData<RGroupMemberInfo> info = api.getGroupMemberInfo(event.getGroupId(), ID);
+        ReturnData<RGroupMemberInfo> info = api.getGroupMemberInfo(GroupID, ID);
 
         if (info.getData() == null) {
             event.respond("成员" + ID + "不存在");
             return;
         }
 
-        boolean permissions = info.getData().getRole().equals("owner") || info.getData().getRole().equals("admin");
+        boolean permissions = Get.permissions(api, GroupID, ID, Admin);
 
         if (permissions) {
             event.respond("你想造反?");

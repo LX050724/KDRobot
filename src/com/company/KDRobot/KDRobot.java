@@ -11,18 +11,22 @@ import cc.moecraft.icq.sender.IcqHttpApi;
 import cc.moecraft.icq.sender.message.MessageBuilder;
 import cc.moecraft.icq.sender.message.components.ComponentAt;
 import cc.moecraft.logger.HyLogger;
-import com.company.KDRobot.function.*;
 import com.company.KDRobot.function.CDTimer.CDTimer;
+import com.company.KDRobot.function.BaiKe;
+import com.company.KDRobot.function.Get;
+import com.company.KDRobot.function.TuringAPI;
 import com.company.KDRobot.function.MessageBord.MessageBord;
 import com.company.KDRobot.function.Top.Top;
 import com.company.KDRobot.function.sc.SuperCommand;
+import com.company.KDRobot.function.GroupConfig.ConfigDataBase;
+import com.company.KDRobot.function.GroupConfig.Configurable;
 
 import java.sql.*;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class KDRobot extends IcqListener {
+public class KDRobot extends IcqListener implements Configurable {
     private Long GroupID;
     private Long Admin;
     private CDTimer cdTimer;
@@ -32,13 +36,28 @@ public class KDRobot extends IcqListener {
     private HyLogger logger;
     //    private Adblock adblock;
     private MessageBord Msg;
+    private String welcome;
+    public static final String[] attributes = {
+            "welcome", "新人看公告,查看机器人帮助发送'bot help'",
+            "Turling", "10",
+            "New", "10",
+            "about", "60",
+            "at", "30",
+            "STFW", "45",
+            "supplement", "45",
+            "quiet", "600",
+            "baike", "600",
+            "bothelp", "60"
+    };
 
     public KDRobot(HyLogger logger, @NotNull KDRobotCfg.Config cfg) {
+
         this.logger = logger;
         Statement stmt = null;
+        Connection conn;
         /* 检查数据库是否存在 */
         try {
-            Connection conn = DriverManager.getConnection(cfg.dataBaseCfg.URL, cfg.dataBaseCfg.NAME, cfg.dataBaseCfg.PASSWORD);
+            conn = DriverManager.getConnection(cfg.dataBaseCfg.URL, cfg.dataBaseCfg.NAME, cfg.dataBaseCfg.PASSWORD);
             stmt = conn.createStatement();
             stmt.execute("create database if not exists Group" + cfg.dataBaseCfg.Group + ';');
             stmt.close();
@@ -63,19 +82,36 @@ public class KDRobot extends IcqListener {
         if (cfg.TurlingKey != null)
             turingAPI = new TuringAPI(cfg.TurlingKey);
         else turingAPI = null;
+        ConfigDataBase configDataBase = new ConfigDataBase(stmt);
         Msg = new MessageBord(stmt, this.Admin, logger);
-        sc = new SuperCommand(stmt, GroupID, this.Admin);
+        sc = new SuperCommand(stmt, configDataBase, GroupID, this.Admin);
         top = new Top(stmt, GroupID, this.Admin, logger);
         cdTimer = new CDTimer(logger);
+        configDataBase.Register(Msg);
+        configDataBase.Register(top);
+        configDataBase.Register(this);
 //        adblock = new Adblock(PATH, logger);
-        cdTimer.AddCD("Turling", 10L);
-        cdTimer.AddCD("New", 10L);
-        cdTimer.AddCD("about", 60L);
-        cdTimer.AddCD("at", 30L);
-        cdTimer.AddCD("STFW", 45L);
-        cdTimer.AddCD("还有什么补充", 45L);
-        cdTimer.AddCD("quiet", 600L);
-        cdTimer.AddCD("baike", 600L);
+    }
+
+    @Override
+    public boolean Config(String Variable, String Value) {
+        if (Variable.equals("welcome"))
+            welcome = Value;
+        else {
+            try {
+                long time = Long.parseLong(Value);
+                if (time < 0) return false;
+                cdTimer.AddCD(Variable, time);
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public String[] GetAttributes() {
+        return attributes;
     }
 
     /**
@@ -110,7 +146,7 @@ public class KDRobot extends IcqListener {
                     return;
                 }
 
-                if (Pattern.matches(".*有什么.?补充.*", msg) && cdTimer.CD("还有什么补充")) {
+                if (Pattern.matches(".*有什么.?补充.*", msg) && cdTimer.CD("supplement")) {
                     event.respond("当回答者询问你\"还有什么补充\"时，这意味着:\n" +
                             "1.你提供的信息少地不足以让人分析问题所在\n" +
                             "2.你的提问缺少清晰、正确、精准并语法正确的基本要求\n" +
@@ -203,14 +239,15 @@ public class KDRobot extends IcqListener {
                             }
                             break;
                         case "help":
-                            event.respond("bot 帮助:\n" +
-                                    "top:水群排行\n" +
-                                    "quiet:buff(第三参数为时间,结尾为d,h,m单位分别为天,时,分,不加为秒)\n" +
-                                    "msg:留言板\n" +
-                                    "t:和图灵机器人聊天(所有人10秒CD)\n" +
-                                    "about:相关信息\n" +
-                                    "baike:查询百度百科(CD10分钟)\n" +
-                                    "help:显示此帮助");
+                            if (cdTimer.CD("bothelp"))
+                                event.respond("bot 帮助:\n" +
+                                        "top:水群排行\n" +
+                                        "quiet:buff(第三参数为时间,结尾为d,h,m单位分别为天,时,分,不加为秒)\n" +
+                                        "msg:留言板\n" +
+                                        "t:和图灵机器人聊天(所有人10秒CD)\n" +
+                                        "about:相关信息\n" +
+                                        "baike:查询百度百科(CD10分钟)\n" +
+                                        "help:显示此帮助");
                             break;
                         case "verify":
                             sc.verify(event, _cmd);
@@ -245,8 +282,7 @@ public class KDRobot extends IcqListener {
                 if (sc.chick(event, UserID) && cdTimer.CD("New"))
                     event.getHttpApi().sendGroupMsg(event.getGroupId(), new MessageBuilder()
                             .add(new ComponentAt(UserID))
-                            .add("新人看公告\n查看机器人帮助发送\n'bot help'")
-                            .toString()
+                            .add(welcome).toString()
                     );
             }
         } catch (Exception e) {

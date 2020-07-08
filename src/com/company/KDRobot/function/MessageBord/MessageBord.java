@@ -7,6 +7,7 @@ import cc.moecraft.icq.sender.message.components.ComponentAt;
 import cc.moecraft.logger.HyLogger;
 import com.company.KDRobot.function.CDTimer.CDTimer;
 import com.company.KDRobot.function.Get;
+import com.company.KDRobot.function.GroupConfig.Configurable;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutCallBack;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutTimer;
 
@@ -16,27 +17,47 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Vector;
 
-public class MessageBord implements TimeOutCallBack {
+public class MessageBord implements TimeOutCallBack, Configurable {
 
     private MessageBordDataBase db;
-    private CDTimer timer;
+    private CDTimer cdTimer;
     private TimeOutTimer timeOut;
     private Long Admin;
     private Long GroupID;
 
     private MessageBordDataBase.Message tmpmsg;
 
+    public static final String[] attributes = {
+            "ls", "60",
+            "look", "60",
+            "push", "600",
+            "del", "10",
+            "msghelp", "60"
+    };
+
     public MessageBord(Statement stmt, Long Admin, HyLogger logger) {
         tmpmsg = null;
         this.Admin = Admin;
         db = new MessageBordDataBase(stmt);
-        timer = new CDTimer(logger);
+        cdTimer = new CDTimer(logger);
         timeOut = new TimeOutTimer();
-        timer.AddCD("ls", 60L);
-        timer.AddCD("look", 60L);
-        timer.AddCD("push", 600L);
-        timer.AddCD("del", 10L);
-        timer.AddCD("help", 60L);
+    }
+
+    @Override
+    public boolean Config(String Variable, String Value) {
+        try {
+            long time = Long.parseLong(Value);
+            if (time < 0) return false;
+            cdTimer.AddCD(Variable, time);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String[] GetAttributes() {
+        return attributes;
     }
 
     public void process(EventGroupMessage event, String[] cmd) {
@@ -44,23 +65,23 @@ public class MessageBord implements TimeOutCallBack {
         String[] _cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
         switch (cmd[0]) {
             case "ls":
-                if (timer.CD(cmd[0]))
+                if (cdTimer.CD("ls"))
                     process_ls(event, _cmd);
                 break;
             case "look":
-                if (cmd.length >= 2 && timer.CD(cmd[0]))
+                if (cmd.length >= 2 && cdTimer.CD("look"))
                     process_look(event, _cmd);
                 break;
             case "del":
-                if (cmd.length >= 2 && timer.CD(cmd[0]))
+                if (cmd.length >= 2 && cdTimer.CD("del"))
                     process_del(event, _cmd);
                 break;
             case "push":
-                if (tmpmsg != null || timer.CD(cmd[0]))
+                if (tmpmsg != null || cdTimer.CD("push"))
                     process_push(event, _cmd);
                 break;
             case "help":
-                if (timer.CD(cmd[0]))
+                if (cdTimer.CD("msghelp"))
                     event.respond("bot msg 帮助:\n" +
                             "ls:列出帖子列表没有第三参数为查看帖子总数和页数,加第三参数为列出列表那一页\n" +
                             "look:查看帖子,第三参数为帖子ID\n" +

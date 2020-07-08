@@ -7,6 +7,7 @@ import cc.moecraft.icq.sender.message.MessageBuilder;
 import cc.moecraft.icq.sender.message.components.ComponentAt;
 import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import com.company.KDRobot.function.Get;
+import com.company.KDRobot.function.GroupConfig.ConfigDataBase;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutCallBack;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutTimer;
 
@@ -20,8 +21,10 @@ public class SuperCommand implements TimeOutCallBack {
     private Long Admin;
     private Long GroupID;
     private TimeOutTimer timeOutTimer;
+    private ConfigDataBase configDataBase;
 
-    public SuperCommand(Statement stmt, Long Group, Long Admin) {
+    public SuperCommand(Statement stmt, ConfigDataBase configDataBase, Long Group, Long Admin) {
+        this.configDataBase = configDataBase;
         timeOutTimer = new TimeOutTimer();
         db = new BlackListDataBase(stmt);
         this.Admin = Admin;
@@ -40,7 +43,7 @@ public class SuperCommand implements TimeOutCallBack {
                 break;
             }
             case "rm": {
-                if(cmd.length < 2) break;
+                if (cmd.length < 2) break;
                 String ID = db.RemoveBlackList(cmd[1]);
                 if (ID != null) event.respond(ID + "成功移除黑名单");
                 else event.respond("移除失败,有可能是没有添加过或拼写错误");
@@ -158,6 +161,30 @@ public class SuperCommand implements TimeOutCallBack {
         event.respond(r);
     }
 
+    private void peocess_config(EventGroupMessage event, String[] cmd) {
+        if (cmd.length < 2) return;
+
+        switch (cmd[0]) {
+            case "read":
+                String Value = configDataBase.ReadConfig(cmd[1]);
+                if (Value == null) {
+                    event.respond("配置'" + cmd[1] + "'不存在");
+                } else {
+                    event.respond(cmd[1] + " = " + Value);
+                }
+                break;
+            case "set":
+                if (cmd.length >= 3) {
+                    if (configDataBase.SetConfig(cmd[1], cmd[2]))
+                        event.respond("set " + cmd[1] + " = " + cmd[2]);
+                    else event.respond("输入有误或配置'" + cmd[1] + "'不存在");
+                }
+                break;
+            default:
+                event.respond("输入有误");
+        }
+    }
+
     public void process(EventGroupMessage event, String[] cmd) {
         if (cmd.length < 1) return;
         String[] _cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
@@ -167,6 +194,9 @@ public class SuperCommand implements TimeOutCallBack {
                 break;
             case "shutup":
                 process_shutup(event, _cmd);
+                break;
+            case "cfg":
+                peocess_config(event, _cmd);
                 break;
             case "sql":
                 if (Admin != null && event.getSenderId().equals(Admin))

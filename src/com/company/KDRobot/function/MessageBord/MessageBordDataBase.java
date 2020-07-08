@@ -48,7 +48,7 @@ public class MessageBordDataBase {
         Vector<Message> vector = new Vector<>();
 
         try {
-            stmt.execute("DELETE FROM MSGBORD WHERE CURRENT_TIMESTAMP() - TIME > 3600 * 24 * 3;");
+            stmt.execute("delete from `msgbord` where current_timestamp() - `TIME` > 3600 * 24 * 3;");
             ResultSet rs = stmt.executeQuery("SELECT * FROM MSGBORD;");
             while (rs.next()) {
                 Message msg = new Message();
@@ -68,14 +68,14 @@ public class MessageBordDataBase {
     public Long pushMsg(Message msg) {
         try {
             PreparedStatement ptmt = stmt.getConnection().prepareStatement(
-                    "INSERT INTO MSGBORD (USERID, TITLE, MSG, TIME) VALUES (?, ?, ?, DEFAULT);");
+                    "insert into `msgbord` (USERID, TITLE, MSG, TIME) values (?, ?, ?, default);");
             ptmt.setLong(1, msg.userID);
             ptmt.setString(2, msg.title);
             ptmt.setString(3, msg.body);
             ptmt.execute();
 
             ptmt = stmt.getConnection().prepareStatement(
-                    "SELECT ID FROM MSGBORD WHERE USERID=? AND TITLE=? AND MSG=?;");
+                    "select `ID` from `msgbord` where `USERID`=? and `TITLE`=? and `MSG`=?;");
             ptmt.setLong(1, msg.userID);
             ptmt.setString(2, msg.title);
             ptmt.setString(3, msg.body);
@@ -91,7 +91,7 @@ public class MessageBordDataBase {
 
     public boolean deleteMsg(int MsgID) {
         try {
-            stmt.execute("DELETE FROM MSGBORD WHERE ID=" + MsgID + ';');
+            stmt.execute("delete from `msgbord` where `ID`=" + MsgID + ';');
             return stmt.getUpdateCount() == 1;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -101,8 +101,8 @@ public class MessageBordDataBase {
 
     public Message find(int MsgID) {
         try {
-            stmt.execute("DELETE FROM MSGBORD WHERE CURRENT_TIMESTAMP() - TIME > 3600 * 24 * 3;");
-            ResultSet rs = stmt.executeQuery("SELECT * FROM MSGBORD WHERE ID=" + MsgID + ';');
+            stmt.execute("delete from `msgbord` where current_timestamp() - `TIME` > 3600 * 24 * 3;");
+            ResultSet rs = stmt.executeQuery("select * from `msgbord` where `ID`=" + MsgID + ';');
             if (rs.next()) {
                 Message msg = new Message();
                 msg.body = rs.getString("MSG");

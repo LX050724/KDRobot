@@ -7,31 +7,51 @@ import cc.moecraft.icq.sender.returndata.returnpojo.get.RGroupMemberInfo;
 import cc.moecraft.logger.HyLogger;
 import com.company.KDRobot.function.CDTimer.CDTimer;
 import com.company.KDRobot.function.Get;
+import com.company.KDRobot.function.GroupConfig.Configurable;
 import javafx.util.Pair;
 
 import java.sql.Statement;
 import java.util.*;
 
-public class Top {
+public class Top implements Configurable {
     private TopDataBase db;
     private CDTimer cdTimer;
     private Long Admin;
     private Long GroupID;
-
+    public static final String[] attributes = {
+            "top", "300",
+            "today", "300",
+            "check", "300",
+            "checktoday", "300",
+            "report", "60",
+            "report#", "10",
+            "tophelp", "300"
+    };
 
     public Top(Statement stmt, Long Group, Long Admin, HyLogger logger) {
         this.Admin = Admin;
         this.GroupID = Group;
         db = new TopDataBase(stmt);
         cdTimer = new CDTimer(logger);
-        cdTimer.AddCD("top", 300L);
-        cdTimer.AddCD("today", 300L);
-        cdTimer.AddCD("check", 300L);
-        cdTimer.AddCD("checktoday", 300L);
-        cdTimer.AddCD("report", 60L);
-        cdTimer.AddCD("report#", 10L);
-        cdTimer.AddCD("help", 300L);
     }
+
+    @Override
+    public String[] GetAttributes() {
+        return attributes;
+    }
+
+    @Override
+    public boolean Config(String Variable, String Value) {
+        try {
+            long time = Long.parseLong(Value);
+            if (time < 0) return false;
+            cdTimer.AddCD(Variable, time);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
+    }
+
 
     public void getMsg(EventGroupMessage event, boolean permissions) {
         if (db.Add(event.getSenderId(), event.getMessage(), permissions)) {
@@ -154,25 +174,25 @@ public class Top {
                 peocess_Top(event);
         } else switch (cmd[0]) {
             case "today":
-                if (permissions || cdTimer.CD(cmd[0]))
+                if (permissions || cdTimer.CD("today"))
                     process_TopToday(event);
                 break;
             case "check":
-                if (permissions || cdTimer.CD(cmd[0]))
+                if (permissions || cdTimer.CD("check"))
                     process_chick(event, cmd.length == 1 ? event.getSenderId().toString() : cmd[1]);
                 break;
             case "checktoday":
-                if (permissions || cdTimer.CD(cmd[0]))
+                if (permissions || cdTimer.CD("checktoday"))
                     process_chicktoday(event, cmd.length == 1 ? event.getSenderId().toString() : cmd[1]);
                 break;
             case "report":
-                if (permissions || cdTimer.CD(cmd[0]))
+                if (permissions || cdTimer.CD("report"))
                     process_report(event, Arrays.copyOfRange(cmd, 1, cmd.length));
                 else if (cdTimer.CD("report#"))
                     event.respond("剩余CD时间" + cdTimer.GetLastTime("report") + "秒,注意,请勿跟风投票,珍惜你的投票机会共同打造良好的交流环境");
                 break;
-            case "help":
-                if (permissions || cdTimer.CD(cmd[0]))
+            case "tophelp":
+                if (permissions || cdTimer.CD("tophelp"))
                     event.respond("bot top 帮助:\n" +
                             "空:查询总水群排行\n" +
                             "today:查询当天水群排行\n" +
@@ -186,4 +206,5 @@ public class Top {
                 event.respond("命令错误\n输入'bot top help'查询帮助");
         }
     }
+
 }

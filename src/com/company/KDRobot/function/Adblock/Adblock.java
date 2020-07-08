@@ -16,15 +16,15 @@ public class Adblock {
         this.logger = logger;
         File d = new File(PATH);
         if (!d.exists())
-            if(!d.mkdir())
+            if (!d.mkdir())
                 System.err.println("创建文件夹失败");
     }
 
     public boolean check(String CQImage) {
         Pattern r = Pattern.compile("^\\[CQ:image,file=(.*),url=(.*)]");
         Matcher m = r.matcher(CQImage);
-        String FileName = null;
-        String Url = null;
+        String FileName;
+        String Url;
         if (m.find()) {
             FileName = m.group(1);
             Url = m.group(2);
@@ -34,11 +34,11 @@ public class Adblock {
         }
         DownloadPicFromUrl.downloadPicture(Url, PATH + '\\' + FileName);
         String code = QRCode.deEncodeByPath(PATH + '\\' + FileName);
-        if(code != null) {
+        if (code != null) {
             return false;
         }
         File imgfile = new File(PATH + '\\' + FileName);
-        if(!imgfile.exists() || !imgfile.delete())
+        if (!imgfile.exists() || !imgfile.delete())
             System.err.println(FileName + "删除失败");
         return true;
     }

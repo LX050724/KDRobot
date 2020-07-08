@@ -22,7 +22,7 @@ public class CDTimer {
     }
 
     public void AddCD(String name, Long time) {
-        CDList.putIfAbsent(name, new Node(time * 1000, null));
+        CDList.put(name, new Node(time * 1000, null));
     }
 
     public Long GetLastTime(String name) {

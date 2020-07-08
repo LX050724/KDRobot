@@ -88,7 +88,7 @@
 >>发现非管理员发送分享群（本的群的分享没关系）自动bl起飞
 
 ## 使用方法
-编写CQHTTP插件配置,放在酷Q目录下`app\io.github.richardchien.coolqhttpapi\config.ini`
+编写CQHTTP插件配置,放在酷Q目录下`app\io.github.richardchien.coolqhttpapi\config.ini`端口和IP可以改,但是需要和机器人命令行参数的保持一致
 ```
 [general]
 host=0.0.0.0
@@ -102,6 +102,8 @@ post_url=http://127.0.0.1:5702
 <KDRobotConfig>
     <!--必填选项,MySQL登录信息-->
     <DataBase URL="jdbc:mysql://xxx.xxx.xxx.xxx:xxx?useSSL=false&amp;serverTimezone=GMT%2B8" NAME="xxx" PASSWORD="xxx"/>
+    <!--图灵机器人Key,不填图灵机器人失效-->
+    <Turling Key="xxxxxxxxxxxxxxxxxxx"/>
     <!--群Element，ID为群号，必填选项，Admin为可选选项,管理QQ号,需要和机器人有好友，带有对于机器人的最高权限,会私聊发送一些通知,不填就不会发送-->
     <Group ID="123456789" Admin="987654321"/>
     <!--可以有多个-->
@@ -111,6 +113,7 @@ post_url=http://127.0.0.1:5702
 然后启动机器人(注意数据库要在根目录下,每个注册的群会各自新建数据库)
 
 ```bash
-java -Dfile.encoding=UTF-8 -jar CQRobot.jar <Config> [color]
+java -Dfile.encoding=UTF-8 -jar CQRobot.jar -Config <Config> [-Color]
 ```
-Config为上述配置文件路径 color为颜色设置,直接输入color启动颜色,命令行参数功能目前尚不完善,不能调换顺序
+`-Dfile.encoding=UTF-8`必填,Config为上述配置文件路径 -Color为启用控制台颜色
+使用`java -Dfile.encoding=UTF-8 -jar CQRobot.jar -help`查看参数列表

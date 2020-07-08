@@ -12,6 +12,7 @@ import com.company.KDRobot.function.TimeOutTimer.TimeOutTimer;
 
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Vector;
 
@@ -39,28 +40,27 @@ public class MessageBord implements TimeOutCallBack {
     }
 
     public void process(EventGroupMessage event, String[] cmd) {
-        if (cmd.length < 3) return;
-        switch (cmd[2]) {
+        if (cmd.length < 1) return;
+        String[] _cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
+        switch (cmd[0]) {
             case "ls":
-                if (timer.CD(cmd[2]))
-                    process_ls(event, cmd);
+                if (timer.CD(cmd[0]))
+                    process_ls(event, _cmd);
                 break;
             case "look":
-                if (cmd.length < 4) break;
-                if (timer.CD(cmd[2]))
-                    process_look(event, cmd);
+                if (cmd.length >= 2 && timer.CD(cmd[0]))
+                    process_look(event, _cmd);
                 break;
             case "del":
-                if (cmd.length < 4) break;
-                if (timer.CD(cmd[2]))
-                    process_del(event, cmd);
+                if (cmd.length >= 2 && timer.CD(cmd[0]))
+                    process_del(event, _cmd);
                 break;
             case "push":
-                if (tmpmsg != null || timer.CD(cmd[2]))
-                    process_push(event, cmd);
+                if (tmpmsg != null || timer.CD(cmd[0]))
+                    process_push(event, _cmd);
                 break;
             case "help":
-                if (timer.CD(cmd[2]))
+                if (timer.CD(cmd[0]))
                     event.respond("bot msg 帮助:\n" +
                             "ls:列出帖子列表没有第三参数为查看帖子总数和页数,加第三参数为列出列表那一页\n" +
                             "look:查看帖子,第三参数为帖子ID\n" +
@@ -78,12 +78,12 @@ public class MessageBord implements TimeOutCallBack {
         Vector<MessageBordDataBase.Message> list = db.ListMsg();
         int size = list.size();
         int sumpage = size / 5 + (size % 5 == 0 ? 0 : 1);
-        if (cmd.length == 3) {
+        if (cmd.length == 0) {
             event.respond(String.format("共%d条,%d页", size, sumpage));
             return;
         }
 
-        Long p = Get.At2Long(cmd[3]);
+        Long p = Get.At2Long(cmd[0]);
         if (p == null) {
             event.respond("页码输入错误");
             return;
@@ -109,7 +109,7 @@ public class MessageBord implements TimeOutCallBack {
     }
 
     private void process_look(EventGroupMessage event, String[] cmd) {
-        Long ID = Get.At2Long(cmd[3]);
+        Long ID = Get.At2Long(cmd[0]);
         if (ID != null) {
             MessageBordDataBase.Message msg = db.find(ID.intValue());
             if (msg != null) {
@@ -131,11 +131,12 @@ public class MessageBord implements TimeOutCallBack {
     }
 
     private void process_del(EventGroupMessage event, String[] cmd) {
-        Long ID = Get.At2Long(cmd[3]);
+        Long ID = Get.At2Long(cmd[0]);
         if (ID != null) {
             MessageBordDataBase.Message msg = db.find(ID.intValue());
             if (msg != null) {
-                boolean permissions = Get.permissions(event.getHttpApi(), event.getGroupId(), event.getSenderId(), Admin);
+                Boolean permissions = Get.permissions(event.getHttpApi(), event.getGroupId(), event.getSenderId(), Admin);
+                permissions = (permissions == null) ? Boolean.FALSE : permissions;
                 if (permissions || msg.userID.equals(event.getSenderId())) {
                     if (db.deleteMsg(ID.intValue())) event.respond("成功删除");
                     else event.respond("错误");
@@ -145,7 +146,7 @@ public class MessageBord implements TimeOutCallBack {
     }
 
     private void process_push(EventGroupMessage event, String[] cmd) {
-        if (cmd.length == 3) {
+        if (cmd.length == 0) {
             event.respond("输入错误，请输入标题重试");
             return;
         }

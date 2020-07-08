@@ -102,8 +102,8 @@ public class Top {
     }
 
     private void process_report(EventGroupMessage event, String[] cmd) {
-        if (cmd.length < 4) return;
-        Long ID = Get.At2Long(cmd[3]);
+        if (cmd.length == 0) return;
+        Long ID = Get.At2Long(cmd[0]);
 
         IcqHttpApi api = event.getHttpApi();
         if (ID == null) {
@@ -118,7 +118,8 @@ public class Top {
             return;
         }
 
-        boolean permissions = Get.permissions(api, GroupID, ID, Admin);
+        Boolean permissions = Get.permissions(api, GroupID, ID, Admin);
+        permissions = (permissions == null) ? Boolean.FALSE : permissions;
 
         if (permissions) {
             event.respond("你想造反?");
@@ -145,32 +146,33 @@ public class Top {
     }
 
     public void process(EventGroupMessage event, String[] cmd) {
-        boolean permissions = Get.permissions(event.getHttpApi(), event.getGroupId(), event.getSenderId(), Admin);
+        Boolean permissions = Get.permissions(event.getHttpApi(), event.getGroupId(), event.getSenderId(), Admin);
+        permissions = (permissions == null) ? Boolean.FALSE : permissions;
 
-        if (cmd.length < 3) {
+        if (cmd.length == 0) {
             if (permissions || cdTimer.CD("top"))
                 peocess_Top(event);
-        } else switch (cmd[2]) {
+        } else switch (cmd[0]) {
             case "today":
-                if (permissions || cdTimer.CD(cmd[2]))
+                if (permissions || cdTimer.CD(cmd[0]))
                     process_TopToday(event);
                 break;
             case "check":
-                if (permissions || cdTimer.CD(cmd[2]))
-                    process_chick(event, cmd.length == 3 ? event.getSenderId().toString() : cmd[3]);
+                if (permissions || cdTimer.CD(cmd[0]))
+                    process_chick(event, cmd.length == 1 ? event.getSenderId().toString() : cmd[1]);
                 break;
             case "checktoday":
-                if (permissions || cdTimer.CD(cmd[2]))
-                    process_chicktoday(event, cmd.length == 3 ? event.getSenderId().toString() : cmd[3]);
+                if (permissions || cdTimer.CD(cmd[0]))
+                    process_chicktoday(event, cmd.length == 1 ? event.getSenderId().toString() : cmd[1]);
                 break;
             case "report":
-                if (permissions || cdTimer.CD(cmd[2]))
-                    process_report(event, cmd);
+                if (permissions || cdTimer.CD(cmd[0]))
+                    process_report(event, Arrays.copyOfRange(cmd, 1, cmd.length));
                 else if (cdTimer.CD("report#"))
                     event.respond("剩余CD时间" + cdTimer.GetLastTime("report") + "秒,注意,请勿跟风投票,珍惜你的投票机会共同打造良好的交流环境");
                 break;
             case "help":
-                if (permissions || cdTimer.CD(cmd[2]))
+                if (permissions || cdTimer.CD(cmd[0]))
                     event.respond("bot top 帮助:\n" +
                             "空:查询总水群排行\n" +
                             "today:查询当天水群排行\n" +

@@ -1,5 +1,6 @@
 package com.company.KDRobot;
 
+import com.sun.istack.internal.NotNull;
 import cc.moecraft.icq.event.EventHandler;
 import cc.moecraft.icq.event.IcqListener;
 import cc.moecraft.icq.event.events.message.EventGroupMessage;
@@ -17,6 +18,7 @@ import com.company.KDRobot.function.Top.Top;
 import com.company.KDRobot.function.sc.SuperCommand;
 
 import java.sql.*;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +33,7 @@ public class KDRobot extends IcqListener {
     //    private Adblock adblock;
     private MessageBord Msg;
 
-    public KDRobot(HyLogger logger, KDRobotCfg.Config cfg) {
+    public KDRobot(HyLogger logger, @NotNull KDRobotCfg.Config cfg) {
         this.logger = logger;
         Statement stmt = null;
         /* 检查数据库是否存在 */
@@ -58,7 +60,9 @@ public class KDRobot extends IcqListener {
 
         this.Admin = cfg.AdminID;
         this.GroupID = cfg.GroupID;
-        turingAPI = new TuringAPI("f4f88216f44c4fbc84f3ae03cc355300");
+        if (cfg.TurlingKey != null)
+            turingAPI = new TuringAPI(cfg.TurlingKey);
+        else turingAPI = null;
         Msg = new MessageBord(stmt, this.Admin, logger);
         sc = new SuperCommand(stmt, GroupID, this.Admin);
         top = new Top(stmt, GroupID, this.Admin, logger);
@@ -74,11 +78,17 @@ public class KDRobot extends IcqListener {
         cdTimer.AddCD("baike", 600L);
     }
 
+    /**
+     * 群消息事件处理
+     *
+     * @param event 事件
+     */
     @EventHandler
     public void onEGEvent(EventGroupMessage event) {
         try {
             if (event.getGroupId().equals(GroupID)) {
-                boolean permissions = Get.permissions(event.getHttpApi(), event.getGroupId(), event.getSenderId(), Admin);
+                Boolean permissions = Get.permissions(event.getHttpApi(), event.getGroupId(), event.getSenderId(), Admin);
+                permissions = (permissions == null) ? Boolean.FALSE : permissions;
 
                 /* top统计以及刷屏禁言 */
                 top.getMsg(event, permissions);
@@ -143,16 +153,17 @@ public class KDRobot extends IcqListener {
 
                 String[] cmd = msg.split("\\s+");
 
-                if (cmd.length <= 1)
+                if (cmd.length < 2)
                     return;
 
                 if (cmd[0].equals("bot")) {
+                    String[] _cmd = Arrays.copyOfRange(cmd, 2, cmd.length);
                     switch (cmd[1]) {
                         case "msg":
-                            Msg.process(event, cmd);
+                            Msg.process(event, _cmd);
                             break;
                         case "top":
-                            top.process(event, cmd);
+                            top.process(event, _cmd);
                             break;
 //                    case "quiet":
 //                        if (cdTimer.CD("quiet")) {
@@ -166,7 +177,7 @@ public class KDRobot extends IcqListener {
 //                        }
 //                        break;
                         case "t":
-                            if (cdTimer.CD("Turling")) {
+                            if (turingAPI != null && cdTimer.CD("Turling")) {
                                 String m = event.getMessage();
                                 m = m.substring(3).trim().substring(1).trim();
                                 String r = turingAPI.machine(m);
@@ -202,7 +213,7 @@ public class KDRobot extends IcqListener {
                                     "help:显示此帮助");
                             break;
                         case "verify":
-                            sc.verify(event, cmd);
+                            sc.verify(event, _cmd);
                             break;
                         default:
                             event.respond("命令错误\n输入'bot help'查询帮助");
@@ -211,7 +222,7 @@ public class KDRobot extends IcqListener {
 
                 if (cmd[0].equals("sc")) {
                     if (permissions)
-                        sc.process(event, cmd);
+                        sc.process(event, Arrays.copyOfRange(cmd, 1, cmd.length));
                 }
             }
         } catch (Exception e) {
@@ -220,6 +231,11 @@ public class KDRobot extends IcqListener {
         }
     }
 
+    /**
+     * 群成员增加事件处理
+     *
+     * @param event 事件
+     */
     @EventHandler
     public void onENGMIEvent(EventNoticeGroupMemberIncrease event) {
         try {
@@ -239,6 +255,11 @@ public class KDRobot extends IcqListener {
         }
     }
 
+    /**
+     * 乘员退群事件处理
+     *
+     * @param event 事件
+     */
     @EventHandler
     public void onENGMLEvent(EventNoticeGroupMemberLeave event) {
         try {
@@ -253,6 +274,11 @@ public class KDRobot extends IcqListener {
         }
     }
 
+    /**
+     * 成员被踢事件处理
+     *
+     * @param event 事件
+     */
     @EventHandler
     public void onENGMKEvent(EventNoticeGroupMemberKick event) {
         try {

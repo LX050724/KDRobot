@@ -9,10 +9,16 @@ public class CDTimer {
     private HyLogger logger;
 
     private TreeMap<String, Node> CDList;
+    private boolean Enable;
 
     public CDTimer(HyLogger logger) {
         this.logger = logger;
+        Enable = true;
         CDList = new TreeMap<>();
+    }
+
+    public void SetEnable(Boolean en) {
+        Enable = en;
     }
 
     public void AddCD(String name, Long time) {
@@ -25,6 +31,7 @@ public class CDTimer {
     }
 
     public boolean CD(String name) {
+        if (!Enable) return true;
         Node node = CDList.get(name);
         if (node.time == null) {
             node.time = new Date().getTime();

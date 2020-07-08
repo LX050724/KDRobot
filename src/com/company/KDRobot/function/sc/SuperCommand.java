@@ -11,6 +11,7 @@ import com.company.KDRobot.function.TimeOutTimer.TimeOutCallBack;
 import com.company.KDRobot.function.TimeOutTimer.TimeOutTimer;
 
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -28,15 +29,19 @@ public class SuperCommand implements TimeOutCallBack {
     }
 
     private void peocess_bl(EventGroupMessage event, String[] cmd) {
-        if (cmd.length < 3) return;
+        if (cmd.length == 0) {
+            event.respond("输入有误");
+            return;
+        }
         IcqHttpApi api = event.getHttpApi();
-        switch (cmd[2]) {
+        switch (cmd[0]) {
             case "ls": {
                 event.respond(db.StringBlackList());
                 break;
             }
             case "rm": {
-                String ID = db.RemoveBlackList(cmd[3]);
+                if(cmd.length < 2) break;
+                String ID = db.RemoveBlackList(cmd[1]);
                 if (ID != null) event.respond(ID + "成功移除黑名单");
                 else event.respond("移除失败,有可能是没有添加过或拼写错误");
                 break;
@@ -59,10 +64,15 @@ public class SuperCommand implements TimeOutCallBack {
                 break;
             }
             case "verify": {
-                if (cmd.length < 4) break;
-                Long Id = Get.At2Long(cmd[3]);
+                if (cmd.length < 2) break;
+                Long Id = Get.At2Long(cmd[1]);
                 if (Id != null) {
-                    if (Get.permissions(api, GroupID, Id, Admin)) {
+                    Boolean permissions = Get.permissions(api, GroupID, Id, Admin);
+                    if (permissions == null) {
+                        event.respond("没有该成员或输入有误");
+                        break;
+                    }
+                    if (permissions) {
                         event.respond("对管理员无效");
                         break;
                     }
@@ -75,8 +85,8 @@ public class SuperCommand implements TimeOutCallBack {
                 break;
             }
             case "celverify": {
-                if (cmd.length < 4) break;
-                Long Id = Get.At2Long(cmd[3]);
+                if (cmd.length < 2) break;
+                Long Id = Get.At2Long(cmd[1]);
                 if (Id != null) {
                     if (timeOutTimer.delete(Id.toString())) {
                         event.respond("取消成功");
@@ -85,19 +95,21 @@ public class SuperCommand implements TimeOutCallBack {
                 break;
             }
             default: {
-                Long Id = db.AddBlackList(cmd[2]);
-                Long Group = event.getGroupId();
+                Long Id = db.AddBlackList(cmd[0]);
                 MessageBuilder builder = new MessageBuilder();
                 if (Id != null) {
-                    if (Get.permissions(api, GroupID, Id, Admin)) {
+                    Boolean permissions = Get.permissions(api, GroupID, Id, Admin);
+                    permissions = (permissions == null) ? Boolean.FALSE : permissions;
+                    if (permissions) {
                         event.respond("对管理员无效");
                         break;
                     }
                     builder.add(Id).add(" 成功添加至黑名单");
-                    if (cmd.length >= 4 && cmd[3].equals("up")) {
+                    if (cmd.length >= 2 && cmd[1].equals("up")) {
                         Long OPT = db.GetOPT(Id);
                         if (OPT != null) {
-                            if (!Get.permissions(api, Group, OPT, Admin)) {
+                            Boolean per = Get.permissions(api, GroupID, OPT, Admin);
+                            if (per != null && !per) {
                                 builder.add("，邀请者 ").add(new ComponentAt(OPT)).add(" 请在60分钟内发送'bot verify <你的QQ号>'验证身份");
                                 timeOutTimer.Add(OPT.toString(), 3600, api, this);
                             }
@@ -111,12 +123,13 @@ public class SuperCommand implements TimeOutCallBack {
     }
 
     private void process_shutup(EventGroupMessage event, String[] cmd) {
-        if (cmd.length < 4) return;
-        Long Id = Get.At2Long(cmd[2]);
-        Long time = Get.Str2Time(cmd[3]);
+        if (cmd.length < 2) return;
+        Long Id = Get.At2Long(cmd[0]);
+        Long time = Get.Str2Time(cmd[1]);
 
         if (Id == null || time == null) {
             event.respond("禁言失败,输入有误");
+            return;
         }
 
         event.getHttpApi().setGroupBan(event.getGroupId(), Id, time);
@@ -126,36 +139,38 @@ public class SuperCommand implements TimeOutCallBack {
     }
 
     private void process_sql(EventGroupMessage event, String[] cmd) {
-        if (cmd.length < 4) return;
-        String SQL = event.getMessage().substring(7);
+        if (cmd.length < 2) return;
+        String msg = event.getMessage();
+        String SQL = msg.substring(msg.indexOf(cmd[1]));
         if (SQL.length() < 3) return;
 
         String r;
-        if (cmd[2].equals("w"))
-            r = db.SQL_Eval(SQL.substring(2), true);
-        else if (cmd[2].equals("r"))
-            r = db.SQL_Eval(SQL.substring(2), false);
+        if (cmd[0].equals("w"))
+            r = db.SQL_Eval(SQL, true);
+        else if (cmd[0].equals("r"))
+            r = db.SQL_Eval(SQL, false);
         else {
             event.respond("错误，指定操作方向r、w");
             return;
         }
         event.getBot().getLogger().log("群'" + event.getGroupId() + "'\t管理员'" +
-                event.getSenderId() + "'\n操作:\n" + SQL.substring(2) + "\n返回:\n" + r);
+                event.getSenderId() + "'\n操作:\n" + SQL + "\n返回:\n" + r);
         event.respond(r);
     }
 
     public void process(EventGroupMessage event, String[] cmd) {
-        if (cmd.length < 2) return;
-        switch (cmd[1]) {
+        if (cmd.length < 1) return;
+        String[] _cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
+        switch (cmd[0]) {
             case "bl":
-                peocess_bl(event, cmd);
+                peocess_bl(event, _cmd);
                 break;
             case "shutup":
-                process_shutup(event, cmd);
+                process_shutup(event, _cmd);
                 break;
             case "sql":
                 if (Admin != null && event.getSenderId().equals(Admin))
-                    process_sql(event, cmd);
+                    process_sql(event, _cmd);
                 else
                     event.respond("仅机器人管理员可操作数据库");
                 break;
@@ -180,7 +195,7 @@ public class SuperCommand implements TimeOutCallBack {
 
     public void verify(EventGroupMessage event, String[] cmd) {
         Long Sender = event.getSenderId();
-        if (cmd[2].equals(Sender.toString()) && timeOutTimer.delete(cmd[2]))
+        if (cmd[0].equals(Sender.toString()) && timeOutTimer.delete(cmd[0]))
             event.respond("验证成功");
     }
 

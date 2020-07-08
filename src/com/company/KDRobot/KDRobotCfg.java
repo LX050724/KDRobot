@@ -22,11 +22,11 @@ public class KDRobotCfg {
         public DataBaseCfg dataBaseCfg;
         public Long GroupID;
         public Long AdminID;
-        public boolean AdminEnable;
+        public String TurlingKey;
 
         public Config() {
             GroupID = AdminID = null;
-            AdminEnable = false;
+            TurlingKey = null;
             dataBaseCfg = new DataBaseCfg();
         }
 
@@ -36,74 +36,70 @@ public class KDRobotCfg {
                     "dataBaseCfg=" + dataBaseCfg +
                     ", GroupID=" + GroupID +
                     ", AdminID=" + AdminID +
-                    ", AdminEnable=" + AdminEnable +
+                    ", TurlingKey='" + TurlingKey + '\'' +
                     '}';
         }
     }
 
     private Vector<Config> ConfigList;
-    private String ErrMsg;
 
     private String URL;
     private String NAME;
     private String PASSWORD;
 
 
-    public KDRobotCfg(String CfgPATH) {
-
+    public KDRobotCfg(String CfgPATH) throws Exception {
         ConfigList = new Vector<>();
-        ErrMsg = null;
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document d = builder.parse(CfgPATH);
 
-        try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document d = builder.parse(CfgPATH);
+        /* 获取根元素 */
+        Element root = d.getDocumentElement();
 
-            /* 获取根元素 */
-            Element root = d.getDocumentElement();
+        if (!root.getTagName().equals("KDRobotConfig"))
+            throw new Exception(CfgPATH + " 可能不是bot配置文件");
 
-            if (!root.getTagName().equals("KDRobotConfig")) {
-                ErrMsg = (CfgPATH + " 可能不是bot配置文件");
-                return;
+        NodeList DataBaseList = root.getElementsByTagName("DataBase");
+
+        if (DataBaseList.getLength() != 1)
+            throw new Exception("有多个或者没有DataBase");
+
+        Element DataBaseElement = (Element) DataBaseList.item(0);
+
+        URL = DataBaseElement.getAttribute("URL");
+        NAME = DataBaseElement.getAttribute("NAME");
+        PASSWORD = DataBaseElement.getAttribute("PASSWORD");
+
+        NodeList GroupList = root.getElementsByTagName("Group");
+
+        if (GroupList.getLength() == 0)
+            throw new Exception(CfgPATH + "中没有配置");
+
+        NodeList TurlingList = root.getElementsByTagName("Turling");
+        String Key = null;
+        if (TurlingList.getLength() == 1) {
+            Element TurlingElement = (Element) TurlingList.item(0);
+            Key = TurlingElement.getAttribute("Key");
+            if (Key.isEmpty())
+                throw new Exception(CfgPATH + "Turling中没有Key属性");
+        } else if (TurlingList.getLength() > 1)
+            throw new Exception(CfgPATH + "中有多个Turling");
+
+        for (int i = 0; i < GroupList.getLength(); i++) {
+            Config cfg = new Config();
+            Element GroupElement = (Element) GroupList.item(i);
+            cfg.GroupID = Long.parseLong(GroupElement.getAttribute("ID"));
+            String admin_s = GroupElement.getAttribute("Admin");
+            if (!admin_s.isEmpty()) {
+                cfg.AdminID = Long.parseLong(admin_s);
             }
-
-            NodeList DataBaseList = root.getElementsByTagName("DataBase");
-
-            if (DataBaseList.getLength() != 1) {
-                ErrMsg = "有多个或者没有DataBase";
-                return;
-            }
-
-            Element DataBaseElement = (Element) DataBaseList.item(0);
-
-            URL = DataBaseElement.getAttribute("URL");
-            NAME = DataBaseElement.getAttribute("NAME");
-            PASSWORD = DataBaseElement.getAttribute("PASSWORD");
-
-            NodeList GroupList = root.getElementsByTagName("Group");
-
-            if (GroupList.getLength() == 0) {
-                ErrMsg = (CfgPATH + "中没有配置");
-                return;
-            }
-
-            for (int i = 0; i < GroupList.getLength(); i++) {
-                Config cfg = new Config();
-                Element GroupElement = (Element) GroupList.item(i);
-                cfg.GroupID = Long.parseLong(GroupElement.getAttribute("ID"));
-                String admin_s = GroupElement.getAttribute("Admin");
-                if (!admin_s.isEmpty()) {
-                    cfg.AdminID = Long.parseLong(admin_s);
-                    cfg.AdminEnable = true;
-                }
-                cfg.dataBaseCfg.NAME = NAME;
-                cfg.dataBaseCfg.PASSWORD = PASSWORD;
-                cfg.dataBaseCfg.URL = URL;
-                cfg.dataBaseCfg.Group = cfg.GroupID;
-                this.ConfigList.add(cfg);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            cfg.dataBaseCfg.NAME = NAME;
+            cfg.dataBaseCfg.PASSWORD = PASSWORD;
+            cfg.dataBaseCfg.URL = URL;
+            cfg.dataBaseCfg.Group = cfg.GroupID;
+            cfg.TurlingKey = Key;
+            this.ConfigList.add(cfg);
         }
     }
 
@@ -122,9 +118,5 @@ public class KDRobotCfg {
         return "KDRobotCfg{" +
                 "ConfigList=" + ConfigList +
                 '}';
-    }
-
-    public String getErrMsg() {
-        return ErrMsg;
     }
 }

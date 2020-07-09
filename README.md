@@ -71,7 +71,7 @@
 >
 >`sc sql <direction> <cmd>`直接操作数据库，direction操作方向：'w'写数据库，'r'读数据库，cmd：MySQL命令。
 >
->`sc cfg write <varibale> <value>`修改机器人的配置，具体可配置的属性查看可配置类中的属性列表
+>`sc cfg set <varibale> <value>`修改机器人的配置，具体可配置的属性查看可配置类中的属性列表
 >
 >`sc cfg read <varibale>`读取机器人配置  
 

@@ -175,10 +175,13 @@ public class SuperCommand implements TimeOutCallBack {
                 break;
             case "set":
                 if (cmd.length >= 3) {
-                    if (configDataBase.SetConfig(cmd[1], cmd[2]))
-                        event.respond("set " + cmd[1] + " = " + cmd[2]);
-                    else event.respond("输入有误或配置'" + cmd[1] + "'不存在");
-                }
+                    String value = event.getMessage();
+                    value = value.substring(value.indexOf("set") + 3);
+                    value = value.substring(value.indexOf(cmd[1]) + cmd[1].length() + 1);
+                    if (configDataBase.SetConfig(cmd[1], value))
+                        event.respond("set " + cmd[1] + " = " + value);
+                    else event.respond("输入有误或配置'" + value + "'不存在");
+                } else event.respond("输入有误");
                 break;
             default:
                 event.respond("输入有误");
@@ -232,12 +235,8 @@ public class SuperCommand implements TimeOutCallBack {
     @Override
     public void timeout(String Key, IcqHttpApi api) {
         Long ID = Get.At2Long(Key);
-        if (Addbl(ID)) {
-            api.setGroupKick(GroupID, ID);
-            api.sendGroupMsg(GroupID, Key + "验证超时，添加BlackList踢出!");
-        } else {
-            api.setGroupKick(GroupID, ID);
-            api.sendGroupMsg(GroupID, Key + "尝试踢出，但添加黑名单异常");
-        }
+        if (Addbl(ID)) api.sendGroupMsg(GroupID, Key + "验证超时，添加BlackList踢出!");
+        else api.sendGroupMsg(GroupID, Key + "尝试踢出，但添加黑名单异常");
+        api.setGroupKick(GroupID, ID);
     }
 }

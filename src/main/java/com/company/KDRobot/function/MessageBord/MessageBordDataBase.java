@@ -31,7 +31,7 @@ public class MessageBordDataBase {
             /* 检查MSGBORD表是否存在 */
             stmt.execute("CREATE TABLE if not exists MSGBORD(" +
                     "ID INT NOT NULL AUTO_INCREMENT," +
-                    "USERID INT NOT NULL," +
+                    "USERID bigint NOT NULL," +
                     "TITLE VARCHAR(20) NOT NULL," +
                     "MSG VARCHAR(255) NOT NULL," +
                     "TIME TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
@@ -68,7 +68,7 @@ public class MessageBordDataBase {
     public Long pushMsg(Message msg) {
         try {
             PreparedStatement ptmt = stmt.getConnection().prepareStatement(
-                    "insert into `msgbord` (USERID, TITLE, MSG, TIME) values (?, ?, ?, default);");
+                    "insert into `msgbord` (`USERID`, `TITLE`, `MSG`, `TIME`) values (?, ?, ?, default);");
             ptmt.setLong(1, msg.userID);
             ptmt.setString(2, msg.title);
             ptmt.setString(3, msg.body);

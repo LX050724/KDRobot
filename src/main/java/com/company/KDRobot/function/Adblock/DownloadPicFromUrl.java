@@ -9,7 +9,7 @@ import java.net.URL;
 public class DownloadPicFromUrl {
     //链接url下载图片
     public static String downloadPicture(String urlList, String path) {
-        URL url = null;
+        URL url;
         try {
             url = new URL(urlList);
             DataInputStream dataInputStream = new DataInputStream(url.openStream());

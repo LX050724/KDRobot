@@ -1,6 +1,5 @@
 package com.company.KDRobot;
 
-import com.sun.istack.internal.NotNull;
 import cc.moecraft.icq.event.EventHandler;
 import cc.moecraft.icq.event.IcqListener;
 import cc.moecraft.icq.event.events.message.EventGroupMessage;
@@ -50,7 +49,7 @@ public class KDRobot extends IcqListener implements Configurable {
             "bothelp", "60"
     };
 
-    public KDRobot(HyLogger logger, @NotNull KDRobotCfg.Config cfg) {
+    public KDRobot(HyLogger logger, KDRobotCfg.Config cfg) {
 
         this.logger = logger;
         Statement stmt = null;

@@ -6,8 +6,6 @@ import cc.moecraft.logger.environments.ColorSupportLevel;
 import com.company.KDRobot.KDRobotCfg;
 import org.apache.commons.cli.*;
 
-import java.nio.charset.Charset;
-
 public class Main {
     static {
         try {

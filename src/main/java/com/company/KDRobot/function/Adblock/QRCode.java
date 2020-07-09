@@ -22,7 +22,7 @@ public class QRCode {
         String content = null;
         BufferedImage image;
         BASE64Decoder decoder = new BASE64Decoder();
-        byte[] b = null;
+        byte[] b;
         try {
 //            int i = baseStr.indexOf("data:image/png;base64,");
 //            baseStr = baseStr.substring(i + "data:image/png;base64,".length());//去掉base64图片的data:image/png;base64,部分才能转换为byte[]
@@ -33,7 +33,7 @@ public class QRCode {
             LuminanceSource source = new BufferedImageLuminanceSource(image);
             Binarizer binarizer = new HybridBinarizer(source);
             BinaryBitmap binaryBitmap = new BinaryBitmap(binarizer);
-            Map<DecodeHintType, Object> hints = new HashMap<DecodeHintType, Object>();
+            Map<DecodeHintType, Object> hints = new HashMap<>();
             hints.put(DecodeHintType.CHARACTER_SET, "UTF-8");
             Result result = new MultiFormatReader().decode(binaryBitmap, hints);//解码
             System.out.println("图片中内容：  ");
@@ -57,7 +57,7 @@ public class QRCode {
             LuminanceSource source = new BufferedImageLuminanceSource(image);
             Binarizer binarizer = new HybridBinarizer(source);
             BinaryBitmap binaryBitmap = new BinaryBitmap(binarizer);
-            Map<DecodeHintType, Object> hints = new HashMap<DecodeHintType, Object>();
+            Map<DecodeHintType, Object> hints = new HashMap<>();
             hints.put(DecodeHintType.CHARACTER_SET, "UTF-8");
             Result result = new MultiFormatReader().decode(binaryBitmap, hints);//解码
             content = result.getText();

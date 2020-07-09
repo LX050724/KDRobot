@@ -21,3 +21,4 @@ DataBase
 Config.xml
 Src\com\company\GroupMessage.java
 Src\com\company\Test.java
+/target/

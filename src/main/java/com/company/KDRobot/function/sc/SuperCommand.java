@@ -178,7 +178,7 @@ public class SuperCommand implements TimeOutCallBack {
                     if (configDataBase.SetConfig(cmd[1], cmd[2]))
                         event.respond("set " + cmd[1] + " = " + cmd[2]);
                     else event.respond("输入有误或配置'" + cmd[1] + "'不存在");
-                }
+                } event.respond("输入有误");
                 break;
             default:
                 event.respond("输入有误");

@@ -29,7 +29,7 @@ public class BlackListDataBase {
         Long Id = Get.At2Long(ID);
         if (Id == null) return null;
         try {
-            if (stmt.execute("SELECT ID FROM BLACKLIST WHERE ID=" + Id + ';')) {
+            if (stmt.executeQuery("SELECT ID FROM BLACKLIST WHERE ID=" + Id + ';').next()) {
                 stmt.execute("DELETE FROM BLACKLIST WHERE ID=" + Id + ';');
                 return Id.toString();
             } else return null;

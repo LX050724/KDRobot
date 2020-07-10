@@ -98,27 +98,29 @@ public class SuperCommand implements TimeOutCallBack {
                 break;
             }
             default: {
-                Long Id = db.AddBlackList(cmd[0]);
                 MessageBuilder builder = new MessageBuilder();
-                if (Id != null) {
-                    Boolean permissions = Get.permissions(api, GroupID, Id, Admin);
+                Long ID = Get.At2Long(cmd[0]);
+                if (ID != null) {
+                    Boolean permissions = Get.permissions(api, GroupID, ID, Admin);
                     permissions = (permissions == null) ? Boolean.FALSE : permissions;
                     if (permissions) {
                         event.respond("对管理员无效");
                         break;
                     }
-                    builder.add(Id).add(" 成功添加至黑名单");
-                    if (cmd.length >= 2 && cmd[1].equals("up")) {
-                        Long OPT = db.GetOPT(Id);
-                        if (OPT != null) {
-                            Boolean per = Get.permissions(api, GroupID, OPT, Admin);
-                            if (per != null && !per) {
-                                builder.add("，邀请者 ").add(new ComponentAt(OPT)).add(" 请在60分钟内发送'bot verify <你的QQ号>'验证身份");
-                                timeOutTimer.Add(OPT.toString(), 3600, api, this);
-                            }
-                        } else builder.add("，未查询到邀请者");
+                    if (db.AddBlackList(ID) != null) {
+                        builder.add(ID).add(" 成功添加至黑名单");
+                        if (cmd.length >= 2 && cmd[1].equals("up")) {
+                            Long OPT = db.GetOPT(ID);
+                            if (OPT != null) {
+                                Boolean per = Get.permissions(api, GroupID, OPT, Admin);
+                                if (per != null && !per) {
+                                    builder.add("，邀请者 ").add(new ComponentAt(OPT)).add(" 请在60分钟内发送'bot verify <你的QQ号>'验证身份");
+                                    timeOutTimer.Add(OPT.toString(), 3600, api, this);
+                                }
+                            } else builder.add("，未查询到邀请者");
+                        }
+                        api.setGroupKick(event.getGroupId(), ID);
                     }
-                    api.setGroupKick(event.getGroupId(), Id);
                 } else builder.add("添加失败,有可能是已经添加过或拼写错误");
                 event.respond(builder.toString());
             }

@@ -41,7 +41,7 @@
 >>`bot msg del <ID>`删除留言,管理员可以删除任何人的留言,非管理员只能删除自己的留言
 >>
 >>`bot msg push <T>`发标题为T的留言,标题截断长度20字,
->>发送之后机器人会提示再次使用该命令录入正文,此时T为正文内容,标题截断长度80字
+>>发送之后机器人会提示再次使用该命令录入正文,此时T为正文内容,标题截断长度255字
 >>
 >>`bot msg help`显示机器人内部的帮助信息
 >>
@@ -105,18 +105,20 @@ post_url=http://127.0.0.1:5702
 <KDRobotConfig>
     <!--必填选项,MySQL登录信息-->
     <DataBase URL="jdbc:mysql://xxx.xxx.xxx.xxx:xxx?useSSL=false&amp;serverTimezone=GMT%2B8" NAME="xxx" PASSWORD="xxx"/>
-    <!--图灵机器人Key,不填图灵机器人失效-->
-    <Turling Key="xxxxxxxxxxxxxxxxxxx"/>
-    <!--群Element，ID为群号，必填选项，Admin为可选选项,管理QQ号,需要和机器人有好友，带有对于机器人的最高权限,会私聊发送一些通知,不填就不会发送-->
-    <Group ID="123456789" Admin="987654321"/>
+
+    <!--群Element，ID为群号，必填选项
+        Admin 机器人管理QQ号,选填,需要和机器人有好友,带有对于机器人的最高权限,会私聊发送举报消息,不填就不会发送
+        TurlingKey 为图灵机器人Key,选填,不填图灵机器人失效-->
+    <Group ID="123456789" Admin="987654321" TurlingKey="xxxxxxxxxxxxxxxxxxx"/>
+
     <!--可以有多个-->
     <Group ID="2222"/>
 </KDRobotConfig>
 ```
 然后启动机器人(注意数据库要在根目录下,每个注册的群会各自新建数据库)
+使用`java -Dfile.encoding=UTF-8 -jar CQRobot-release-Vx.x-jar-with-dependencies.jar -help`查看参数列表
 
 ```bash
-java -Dfile.encoding=UTF-8 -jar CQRobot.jar -Config <Config> [-Color]
+java -Dfile.encoding=UTF-8 -jar CQRobot-release-Vx.x-jar-with-dependencies.jar -Config <Config> [-Color]
 ```
 `-Dfile.encoding=UTF-8`必填,Config为上述配置文件路径 -Color为启用控制台颜色
-使用`java -Dfile.encoding=UTF-8 -jar CQRobot.jar -help`查看参数列表

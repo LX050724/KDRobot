@@ -213,10 +213,16 @@ public class KDRobot extends IcqListener implements Configurable {
 //                        break;
                         case "t":
                             if (turingAPI != null && cdTimer.CD("Turling")) {
-                                String m = event.getMessage();
-                                m = m.substring(3).trim().substring(1).trim();
-                                String r = turingAPI.machine(m);
-                                logger.log(String.format("接到%d的图灵消息:'%s',回复:'%s'", event.getSenderId(), m, r));
+                                String m = msg.substring(msg.indexOf("bot") + 1);
+                                m = m.substring(m.indexOf("t") + 1).trim();
+                                if (m.isEmpty()) {
+                                    cdTimer.Ready("Turling");
+                                    break;
+                                }
+                                Long ID = event.getSenderId();
+                                String Name = Get.ID2Name(event.getHttpApi(), GroupID, ID);
+                                String r = turingAPI.Send(GroupID, ID, Name, m);
+                                logger.log(String.format("群%d接到%d的图灵消息:'%s',回复:'%s'", GroupID, ID, m, r));
                                 event.respond(r);
                             }
                             break;
@@ -230,7 +236,7 @@ public class KDRobot extends IcqListener implements Configurable {
                                 event.respond("请输入要查询的关键字");
                                 break;
                             }
-                            if (permissions || cdTimer.CD("baike")) {
+                            if (cdTimer.CD("baike")) {
                                 String keyword = msg.substring(msg.indexOf("baike") + 6);
                                 event.respond(keyword + "百度百科：\n" + BaiKe.GetBaiKe(keyword));
                             } else {

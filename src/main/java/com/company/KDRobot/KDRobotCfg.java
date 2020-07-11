@@ -76,29 +76,19 @@ public class KDRobotCfg {
         if (GroupList.getLength() == 0)
             throw new Exception(CfgPATH + "中没有配置");
 
-        NodeList TurlingList = root.getElementsByTagName("Turling");
-        String Key = null;
-        if (TurlingList.getLength() == 1) {
-            Element TurlingElement = (Element) TurlingList.item(0);
-            Key = TurlingElement.getAttribute("Key");
-            if (Key.isEmpty())
-                throw new Exception(CfgPATH + "Turling中没有Key属性");
-        } else if (TurlingList.getLength() > 1)
-            throw new Exception(CfgPATH + "中有多个Turling");
-
         for (int i = 0; i < GroupList.getLength(); i++) {
             Config cfg = new Config();
             Element GroupElement = (Element) GroupList.item(i);
             cfg.GroupID = Long.parseLong(GroupElement.getAttribute("ID"));
             String admin_s = GroupElement.getAttribute("Admin");
-            if (!admin_s.isEmpty()) {
-                cfg.AdminID = Long.parseLong(admin_s);
-            }
+            String Key = GroupElement.getAttribute("TurlingKey");
+
+            cfg.TurlingKey = Key.isEmpty() ? null : Key;
+            cfg.AdminID = admin_s.isEmpty() ? null : Long.parseLong(admin_s);
             cfg.dataBaseCfg.NAME = NAME;
             cfg.dataBaseCfg.PASSWORD = PASSWORD;
             cfg.dataBaseCfg.URL = URL;
             cfg.dataBaseCfg.Group = cfg.GroupID;
-            cfg.TurlingKey = Key;
             this.ConfigList.add(cfg);
         }
     }

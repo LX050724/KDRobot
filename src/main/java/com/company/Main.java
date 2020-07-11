@@ -16,22 +16,18 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        if (!System.getProperty("file.encoding").equals("UTF-8")) {
-            exit("默认编码集必须是UTF-8,请在虚拟机参数中添加'-Dfile.encoding=UTF-8'");
-        }
-
         CommandLineParser parser = new DefaultParser();
         Options options = new Options();
-        options.addOption("help", "help", false, "显示此帮助");
-        options.addOption("Config", "Config", true, "配置文件路径");
-        options.addOption("Color", "Color", false, "开启颜色支持");
-        options.addOption("Host", "Host", true, "Http插件posthost 默认值'127.0.0.1'");
-        options.addOption("PostPort", "PostPort", true, "Http插件postport 默认值'5701'");
-        options.addOption("SocketPort", "SocketPort", true, "Http插件socketPort 默认值'5702'");
-        options.addOption("Log", "Log", true, "Log输出路径 默认不输出");
-        options.addOption("Name", "Name", true, "Bot账号名 默认值'Bot01'");
-        options.addOption("AccessToken", "AccessToken", true, "Access Token 访问令牌，默认为空");
-        options.addOption("Secret", "Secret", true, "SHA1 验证秘钥，默认为空");
+        options.addOption("help", "help", false, "-help 显示此帮助");
+        options.addOption("Config", "Config", true, "-Config <PATH> 必填 配置文件路径 ");
+        options.addOption("Color", "Color", false, "-Color 选填 开启颜色支持");
+        options.addOption("Host", "Host", true, "-Host <IP> 选填 Http插件posthost 默认值'127.0.0.1'");
+        options.addOption("PostPort", "PostPort", true, "-PostPort <Prot> 选填 Http插件postport 默认值'5701'");
+        options.addOption("SocketPort", "SocketPort", true, "-SocketPort <Port> 选填 Http插件socketPort 默认值'5702'");
+        options.addOption("Log", "Log", true, "-Log <FolderPATH> 选填 Log输出路径 默认不输出");
+        options.addOption("Name", "Name", true, "-Name <Name> 选填 Bot账号名 默认值'Bot01'");
+        options.addOption("AccessToken", "AccessToken", true, "-AccessToken <Token> 选填 Access Token 访问令牌，默认为空");
+        options.addOption("Secret", "Secret", true, "-Secret <Key> 选填 SHA1 验证秘钥，默认为空");
 
         CommandLine commandLine = null;
         try {
@@ -47,6 +43,10 @@ public class Main {
                 System.out.println(String.format("\t-%-10s\t%s", option.getLongOpt(), option.getDescription()));
             }
             System.exit(0);
+        }
+
+        if (!System.getProperty("file.encoding").equals("UTF-8")) {
+            exit("默认编码集必须是UTF-8,请在虚拟机参数中添加'-Dfile.encoding=UTF-8'");
         }
 
         int socketPort = 5702;

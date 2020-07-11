@@ -45,4 +45,8 @@ public class CDTimer {
         node.time = new Date().getTime();
         return true;
     }
+
+    public void Ready(String name) {
+        CDList.get(name).time = null;
+    }
 }

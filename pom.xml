@@ -84,6 +84,13 @@
             <artifactId>commons-cli</artifactId>
             <version>1.4</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.72</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -19,13 +19,15 @@ public class Top implements Configurable {
     private Long Admin;
     private Long GroupID;
     public static final String[] attributes = {
-            "top", "300",
-            "today", "300",
-            "check", "300",
-            "checktoday", "300",
-            "report", "60",
+            "top", "300",               //bot top CD时间
+            "today", "300",             //bot top today CD时间
+            "check", "300",             //bot top check CD时间
+            "checktoday", "300",        //bot top checktoday CD时间
+            "report", "60",             //bot top report CD时间
             "report#", "10",
-            "tophelp", "300"
+            "tophelp", "300",           //bot top help CD时间
+            "MAXfreq", "30",            //最大发言频率（估计）
+            "FreqLimitEnable", "NO"     //启用发言频率检测，YES或NO
     };
 
     public Top(Statement stmt, Long Group, Long Admin, HyLogger logger) {
@@ -43,9 +45,27 @@ public class Top implements Configurable {
     @Override
     public boolean Config(String Variable, String Value) {
         try {
-            long time = Long.parseLong(Value);
-            if (time < 0) return false;
-            cdTimer.AddCD(Variable, time);
+            switch (Variable) {
+                case "MAXfreq": {
+                    double freq = Double.parseDouble(Value);
+                    if (freq < 0) return false;
+                    db.setFreq(freq);
+                    break;
+                }
+                case "FreqLimitEnable": {
+                    if (Value.equals("YES"))
+                        db.setFreqLimitEnable(true);
+                    else if (Value.equals("NO"))
+                        db.setFreqLimitEnable(false);
+                    else return false;
+                    break;
+                }
+                default: {
+                    long time = Long.parseLong(Value);
+                    if (time < 0) return false;
+                    cdTimer.AddCD(Variable, time);
+                }
+            }
         } catch (NumberFormatException e) {
             return false;
         }

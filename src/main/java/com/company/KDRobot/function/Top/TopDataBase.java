@@ -36,7 +36,7 @@ public class TopDataBase {
                     }
                     stmt.execute("UPDATE TOP SET LAST_MSG_TIME=CURRENT_TIMESTAMP() WHERE ID=0;");
                 } else {
-                    stmt.execute("INSERT INTO TOP VALUES (0, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT, NULL);");
+                    stmt.execute("INSERT INTO TOP (LAST_MSG_TIME) VALUES (CURRENT_TIMESTAMP());");
                 }
             } catch (SQLException throwables) {
                 throwables.printStackTrace();
@@ -44,6 +44,9 @@ public class TopDataBase {
         }
     }
 
+    private final static double attenuation = 0.854;
+    private boolean FreqLimitEnable = false;
+    private double freq = 30.0;
     private RefreshTimer refreshTimer;
     private Statement stmt;
 
@@ -58,15 +61,16 @@ public class TopDataBase {
                     "LAST_MSG VARCHAR(255) null," +
                     "`REPEAT` TINYINT UNSIGNED NULL," +
                     "LAST_MSG_TIME TIMESTAMP null," +
-                    "`KILL` SMALLINT UNSIGNED default 0 not null," +
-                    "TICKET SMALLINT UNSIGNED default 1 not null," +
+                    "`AVE` double default 0," +
+                    "`KILL` smallint unsigned default 0 not null," +
+                    "TICKET smallint unsigned default 1 not null," +
                     "OPT BIGINT UNSIGNED NULL," +
                     "INDEX TOP_ALL_index(`ALL`)," +
                     "INDEX TOP_ID_index(ID)," +
                     "INDEX TOP_TODAY_index(TODAY)," +
                     "CONSTRAINT TOP_pk PRIMARY KEY (ID));");
             /* 添加用于记录保存时间的0号 */
-            stmt.execute("REPLACE INTO TOP VALUES (0, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT, DEFAULT);");
+            stmt.execute("REPLACE INTO TOP (ID, LAST_MSG_TIME) VALUES (0, current_time);");
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
@@ -78,7 +82,7 @@ public class TopDataBase {
     public void AddMember(Long ID, Long OperatorID) {
         try {
             PreparedStatement ptmt = stmt.getConnection().prepareStatement(
-                    "INSERT INTO TOP VALUES (?, 0, 0, null, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT, ?) " +
+                    "INSERT INTO TOP (ID, LAST_MSG_TIME, OPT) VALUES (?, CURRENT_TIMESTAMP(), ?) " +
                             "ON DUPLICATE KEY UPDATE OPT = ?;");
             ptmt.setLong(1, ID);
             ptmt.setLong(2, OperatorID);
@@ -89,7 +93,7 @@ public class TopDataBase {
         }
     }
 
-    public Boolean Add(Long ID, String msg, boolean permissions) {
+    public boolean Add(Long ID, String msg, boolean permissions) {
         String s = msg;
         boolean ban = false;
 
@@ -99,12 +103,15 @@ public class TopDataBase {
         try {
             /* 获取用户信息 */
             PreparedStatement ptmt1 = stmt.getConnection().prepareStatement(
-                    "SELECT LAST_MSG,`REPEAT` FROM TOP WHERE ID=?;");
+                    "SELECT LAST_MSG,`REPEAT`,`LAST_MSG_TIME`,`AVE`,`ALL` FROM TOP WHERE ID=?;");
             ptmt1.setLong(1, ID);
             ResultSet rs = ptmt1.executeQuery();
             int repeat = 0;
             /* 获取到信息 */
             if (rs.next()) {
+                double singlefreq = 60000.0 / (new Date().getTime() - rs.getTimestamp(3).getTime());
+                double ave = rs.getDouble(4) * attenuation + singlefreq;
+                double avefreq = ave * (1 - attenuation);
                 /* 不是管理 */
                 if (!permissions) {
                     /* 获取上次发言内容 */
@@ -112,26 +119,35 @@ public class TopDataBase {
 
                     /* 如果重复加1 */
                     if (lastmsg != null && lastmsg.equals(s)) {
-                        /* 重复超上限禁言 */
+                        /* 重复超上限 */
                         repeat = rs.getInt(2) + 1;
                         ban = repeat >= 5;
                     }
+                    /* 频率异常禁言，频率异常只在启用并且总发言数大于15的时候生效 */
+                    if (FreqLimitEnable && avefreq > freq && rs.getLong(5) > 15) {
+                        ban = true;
+                        //超速后自动设置频率为最大频率的一半
+                        ave = (freq * 0.5) / (1 - attenuation);
+                    }
                 }
                 /* 更新数据库 */
-                PreparedStatement ptmt2 = stmt.getConnection().prepareStatement("UPDATE TOP " +
-                        "SET TODAY=TODAY + 1,`ALL`=`ALL` + 1," +
+                PreparedStatement ptmt2 = stmt.getConnection().prepareStatement("UPDATE TOP SET " +
+                        "TODAY=TODAY+1," +
+                        "`ALL`=`ALL`+1," +
                         "LAST_MSG=?," +
-                        "`REPEAT`= ?," +
-                        "LAST_MSG_TIME=CURRENT_TIMESTAMP() " +
+                        "`REPEAT`=?," +
+                        "LAST_MSG_TIME=CURRENT_TIMESTAMP()," +
+                        "AVE=? " +
                         "WHERE ID=?;");
                 ptmt2.setString(1, s);
                 ptmt2.setInt(2, repeat);
-                ptmt2.setLong(3, ID);
+                ptmt2.setDouble(3, ave);
+                ptmt2.setLong(4, ID);
                 ptmt2.execute();
             } else {
                 /* 没获取到插入数据 */
                 PreparedStatement ptmt3 = stmt.getConnection().prepareStatement(
-                        "INSERT INTO TOP VALUES (?, 0, 0, ?, null, CURRENT_TIMESTAMP(), DEFAULT, DEFAULT, DEFAULT);");
+                        "INSERT INTO TOP (ID, `ALL`, TODAY, LAST_MSG, LAST_MSG_TIME) VALUES (?, 1, 1, ?, CURRENT_TIMESTAMP());");
                 ptmt3.setLong(1, ID);
                 ptmt3.setString(2, s);
                 ptmt3.execute();
@@ -223,5 +239,13 @@ public class TopDataBase {
             e.printStackTrace();
         }
         return -1;
+    }
+
+    public void setFreq(double freq) {
+        this.freq = freq;
+    }
+
+    public void setFreqLimitEnable(boolean freqLimitEnable) {
+        FreqLimitEnable = freqLimitEnable;
     }
 }

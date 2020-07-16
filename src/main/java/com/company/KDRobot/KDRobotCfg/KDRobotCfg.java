@@ -41,7 +41,6 @@ public class KDRobotCfg {
             cfg.dataBaseCfg.Group = cfg.GroupID;
             ConfigList.add(cfg);
         }
-        System.out.println(ConfigList);
     }
 
     public Vector<Config> getConfigList() {

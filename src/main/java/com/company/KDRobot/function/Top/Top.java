@@ -74,9 +74,10 @@ public class Top implements Configurable {
 
 
     public void getMsg(EventGroupMessage event, boolean permissions) {
-        if (db.Add(event.getSenderId(), event.getMessage(), permissions)) {
+        if (db.Add(event.getSelfId(), event.getMessage(), permissions) &&
+                Get.permissions(event.getHttpApi(), GroupID, event.getSelfId(), Admin)) {
             event.getHttpApi().setGroupBan(event.getGroupId(), event.getSenderId(), 900);
-            event.getBot().getLogger().log(event.getSenderId() + "刷屏禁言");
+            event.getBot().getLogger().log(String.format("群%d,成员%d刷屏禁言",GroupID, event.getSenderId()));
             event.respond(Get.ID2Name(event.getHttpApi(), event.getGroupId(), event.getSenderId()) + "刷屏禁言");
         }
     }

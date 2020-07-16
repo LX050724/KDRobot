@@ -10,6 +10,7 @@ import cc.moecraft.icq.sender.IcqHttpApi;
 import cc.moecraft.icq.sender.message.MessageBuilder;
 import cc.moecraft.icq.sender.message.components.ComponentAt;
 import cc.moecraft.logger.HyLogger;
+import com.company.KDRobot.KDRobotCfg.Config;
 import com.company.KDRobot.function.CDTimer.CDTimer;
 import com.company.KDRobot.function.BaiKe;
 import com.company.KDRobot.function.Get;
@@ -49,7 +50,7 @@ public class KDRobot extends IcqListener implements Configurable {
             "bothelp", "60"
     };
 
-    public KDRobot(HyLogger logger, KDRobotCfg.Config cfg) {
+    public KDRobot(HyLogger logger, Config cfg) {
 
         this.logger = logger;
         Statement stmt = null;

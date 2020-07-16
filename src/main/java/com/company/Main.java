@@ -3,7 +3,7 @@ package com.company;
 import cc.moecraft.icq.PicqBotX;
 import cc.moecraft.icq.PicqConfig;
 import cc.moecraft.logger.environments.ColorSupportLevel;
-import com.company.KDRobot.KDRobotCfg;
+import com.company.KDRobot.KDRobotCfg.KDRobotCfg;
 import org.apache.commons.cli.*;
 
 public class Main {

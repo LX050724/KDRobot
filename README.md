@@ -99,21 +99,28 @@ port=5701
 post_url=http://127.0.0.1:5702
 ```
 
-编写机器人配置xml
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<KDRobotConfig>
-    <!--必填选项,MySQL登录信息-->
-    <DataBase URL="jdbc:mysql://xxx.xxx.xxx.xxx:xxx?useSSL=false&amp;serverTimezone=GMT%2B8" NAME="xxx" PASSWORD="xxx"/>
-
-    <!--群Element，ID为群号，必填选项
-        Admin 机器人管理QQ号,选填,需要和机器人有好友,带有对于机器人的最高权限,会私聊发送举报消息,不填就不会发送
-        TurlingKey 为图灵机器人Key,选填,不填图灵机器人失效-->
-    <Group ID="123456789" Admin="987654321" TurlingKey="xxxxxxxxxxxxxxxxxxx"/>
-
-    <!--可以有多个-->
-    <Group ID="2222"/>
-</KDRobotConfig>
+编写机器人配置json
+```json5
+{
+  "DataBase": {
+    //数据库链接，用户名，密码
+    "URL": "jdbc:mysql://xxx.xxx.xxx.xxx:xxxx?useSSL=false&serverTimezone=GMT%2B8",
+    "NAME": "xxxx",
+    "PASSWORD": "xxxx"
+  },
+  "Group": [
+    {
+      "ID": 123456,         //群号,必填项
+      "Admin": 654321,      //机器人管理QQ号,选填,需要和机器人有好友,带有管理权限和操作数据库的权限,会私聊发送举报消息,不填就不会发送
+      "TurlingKey": "xx..." //图灵机器人Key,选填,不填图灵机器人失效
+    },
+    {
+      "ID": 789654,
+      "Admin": 456987
+    }
+    // 可以有多组...
+  ]
+}
 ```
 然后启动机器人(注意数据库要在根目录下,每个注册的群会各自新建数据库)
 使用`java -Dfile.encoding=UTF-8 -jar CQRobot-release-Vx.x-jar-with-dependencies.jar -help`查看参数列表

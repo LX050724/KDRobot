@@ -108,6 +108,7 @@ public class SuperCommand implements TimeOutCallBack {
                         break;
                     }
                     if (db.AddBlackList(ID) != null) {
+                        timeOutTimer.delete(ID.toString());
                         builder.add(ID).add(" 成功添加至黑名单");
                         if (cmd.length >= 2 && cmd[1].equals("up")) {
                             Long OPT = db.GetOPT(ID);

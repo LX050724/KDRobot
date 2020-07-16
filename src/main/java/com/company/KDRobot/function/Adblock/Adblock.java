@@ -1,45 +1,33 @@
 package com.company.KDRobot.function.Adblock;
 
-import cc.moecraft.logger.HyLogger;
+import com.company.KDRobot.function.Get;
 
-import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//TODO 以后要修改为全部在内存中处理完成
 public class Adblock {
-    private final String PATH;
-    private HyLogger logger;
-
-    public Adblock(String WorkSpace, HyLogger logger) {
-        this.PATH = WorkSpace + "/img";
-        this.logger = logger;
-        File d = new File(PATH);
-        if (!d.exists())
-            if (!d.mkdir())
-                System.err.println("创建文件夹失败");
-    }
-
-    public boolean check(String CQImage) {
-        Pattern r = Pattern.compile("^\\[CQ:image,file=(.*),url=(.*)]");
-        Matcher m = r.matcher(CQImage);
-        String FileName;
-        String Url;
-        if (m.find()) {
-            FileName = m.group(1);
-            Url = m.group(2);
-        } else {
-            System.err.println(CQImage + "错误");
-            return true;
+    /**
+     * 搜索消息中的image消息，识别其中是否包含二维码
+     *
+     * @param msg 原始消息
+     * @return 是否包含有效的二维码
+     */
+    public static boolean check(String msg) {
+        for (String CQImage : Get.CQCode(msg, "image")) {
+            Pattern r = Pattern.compile("^\\[CQ:image,file=.*,url=(.*)]");
+            Matcher m = r.matcher(CQImage);
+            String FileName;
+            String Url;
+            if (m.find()) {
+                Url = m.group(1);
+            } else {
+                System.err.println(CQImage + "错误");
+                return true;
+            }
+            byte[] img = DownloadPicFromUrl.downloadPicture(Url);
+            if (QRCode.deEncode(img) != null)
+                return true;
         }
-        DownloadPicFromUrl.downloadPicture(Url, PATH + '\\' + FileName);
-        String code = QRCode.deEncodeByPath(PATH + '\\' + FileName);
-        if (code != null) {
-            return false;
-        }
-        File imgfile = new File(PATH + '\\' + FileName);
-        if (!imgfile.exists() || !imgfile.delete())
-            System.err.println(FileName + "删除失败");
-        return true;
+        return false;
     }
 }

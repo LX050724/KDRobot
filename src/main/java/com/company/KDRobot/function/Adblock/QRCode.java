@@ -3,12 +3,10 @@ package com.company.KDRobot.function.Adblock;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
-import sun.misc.BASE64Decoder;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,17 +16,11 @@ public class QRCode {
      * 解析二维码解析,此方法是解析Base64格式二维码图片
      * baseStr:base64字符串,data:image/png;base64开头的
      */
-    public static String deEncodeByBase64(String baseStr) {
+    public static String deEncode(byte[] bytes) {
         String content = null;
         BufferedImage image;
-        BASE64Decoder decoder = new BASE64Decoder();
-        byte[] b;
         try {
-//            int i = baseStr.indexOf("data:image/png;base64,");
-//            baseStr = baseStr.substring(i + "data:image/png;base64,".length());//去掉base64图片的data:image/png;base64,部分才能转换为byte[]
-
-            b = decoder.decodeBuffer(baseStr);//baseStr转byte[]
-            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(b);//byte[] 转BufferedImage
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);//byte[] 转BufferedImage
             image = ImageIO.read(byteArrayInputStream);
             LuminanceSource source = new BufferedImageLuminanceSource(image);
             Binarizer binarizer = new HybridBinarizer(source);
@@ -36,36 +28,9 @@ public class QRCode {
             Map<DecodeHintType, Object> hints = new HashMap<>();
             hints.put(DecodeHintType.CHARACTER_SET, "UTF-8");
             Result result = new MultiFormatReader().decode(binaryBitmap, hints);//解码
-            System.out.println("图片中内容：  ");
-            System.out.println("content： " + result.getText());
             content = result.getText();
-        } catch (IOException | NotFoundException e) {
-//            e.printStackTrace();
+        } catch (IOException | NotFoundException ignored) {
         }
         return content;
     }
-
-    /**
-     * 解析二维码,此方法解析一个路径的二维码图片
-     * path:图片路径
-     */
-    public static String deEncodeByPath(String path) {
-        String content = null;
-        BufferedImage image;
-        try {
-            image = ImageIO.read(new File(path));
-            LuminanceSource source = new BufferedImageLuminanceSource(image);
-            Binarizer binarizer = new HybridBinarizer(source);
-            BinaryBitmap binaryBitmap = new BinaryBitmap(binarizer);
-            Map<DecodeHintType, Object> hints = new HashMap<>();
-            hints.put(DecodeHintType.CHARACTER_SET, "UTF-8");
-            Result result = new MultiFormatReader().decode(binaryBitmap, hints);//解码
-            content = result.getText();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NotFoundException ignored) {
-        }
-        return content;
-    }
-
 }

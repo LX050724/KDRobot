@@ -8,7 +8,7 @@ import cc.moecraft.logger.HyLogger;
 import com.company.KDRobot.function.CDTimer.CDTimer;
 import com.company.KDRobot.function.Get;
 import com.company.KDRobot.function.GroupConfig.Configurable;
-import javafx.util.Pair;
+import com.company.KDRobot.util.Pair;
 
 import java.sql.Statement;
 import java.util.*;
@@ -70,9 +70,9 @@ public class Top implements Configurable {
         StringBuilder stringBuilder = new StringBuilder();
         int count = 0;
         for (Pair<Long, Long> i : list) {
-            if (i.getValue() == 0) continue;
-            String name = Get.ID2Name(api, event.getGroupId(), i.getKey());
-            stringBuilder.append(String.format("第%d名 %s---%d条", ++count, name, i.getValue()))
+            if (i.first == 0) continue;
+            String name = Get.ID2Name(api, event.getGroupId(), i.second);
+            stringBuilder.append(String.format("第%d名 %s---%d条", ++count, name, i.first))
                     .append('\n');
         }
         stringBuilder.deleteCharAt(stringBuilder.length() - 1);
@@ -101,7 +101,7 @@ public class Top implements Configurable {
         }
 
         String name = Get.ID2Name(event.getHttpApi(), event.getGroupId(), ID);
-        event.respond(String.format("%s 总排行第%d名,共%d条", name, top.getKey(), top.getValue()));
+        event.respond(String.format("%s 总排行第%d名,共%d条", name, top.second, top.first));
     }
 
     private void process_chicktoday(EventGroupMessage event, String IDStr) {
@@ -118,7 +118,7 @@ public class Top implements Configurable {
         }
 
         String name = Get.ID2Name(event.getHttpApi(), event.getGroupId(), ID);
-        event.respond(String.format("%s 今日排行第%d名,共%d条", name, top.getKey(), top.getValue()));
+        event.respond(String.format("%s 今日排行第%d名,共%d条", name, top.second, top.first));
     }
 
     private void process_report(EventGroupMessage event, String[] cmd) {

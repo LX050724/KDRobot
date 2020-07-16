@@ -14,7 +14,8 @@ public interface Configurable {
 
     /**
      * 配置回调,由ConfigDataBase调用,传入配置
-     *  @param Variable 变量名
+     *
+     * @param Variable 变量名
      * @param Value    值
      * @return 成功返回true
      */

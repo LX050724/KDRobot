@@ -49,7 +49,7 @@ public class KDRobotCfg {
 
     public void Register(PicqBotX bot) {
         for (Config i : ConfigList) {
-            bot.getEventManager().registerListeners(new KDRobot(bot.getLogger(), i));
+            bot.getEventManager().registerListener(new KDRobot(bot.getLogger(), i));
         }
     }
 

@@ -7,7 +7,7 @@
     <name>KDRobot</name>
     <description>基于酷Q CQHTTP插件的群管理型QQ机器人</description>
     <url>https://github.com/LX050724/KDRobot</url>
-    <version>release-V1.0</version>
+    <version>release-V1.1</version>
 
     <packaging>jar</packaging>
 

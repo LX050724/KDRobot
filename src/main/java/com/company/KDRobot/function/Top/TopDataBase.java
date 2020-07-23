@@ -109,7 +109,8 @@ public class TopDataBase {
             int repeat = 0;
             /* 获取到信息 */
             if (rs.next()) {
-                double singlefreq = 60000.0 / (new Date().getTime() - rs.getTimestamp(3).getTime());
+                Timestamp timestamp =  rs.getTimestamp(3);
+                double singlefreq = 60000.0 / (new Date().getTime() - (timestamp == null ? 0 : timestamp.getTime()));
                 double ave = rs.getDouble(4) * attenuation + singlefreq;
                 double avefreq = ave * (1 - attenuation);
                 /* 不是管理 */

@@ -1,4 +1,6 @@
-# KDRobot
+# ***酷Q停运，该项目停止***
+
+# ~~KDRobot~~
 
 基于酷Q CQHTTP插件的群管理型QQ机器人
 
